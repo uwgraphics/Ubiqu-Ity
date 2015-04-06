@@ -1,0 +1,84 @@
+{# Tagged and Tokenized Output #}
+
+{% if
+    tags is defined and
+    rules is defined and
+    tokens is defined and
+    text_str is defined
+%}
+    {# TODO: Output untagged tokens and/or untokenized chars BEFORE first tag!!! #}
+
+    {% for tag_index in range(0, tags|length) %}
+        {% set tag = tags[tag_index] %}
+        {% set next_pos = tag.pos_end + tag.token_end_len %}
+
+        {# Begin tag opening wrapper tag #}
+        {% set local_rules = [] %}
+        {% for rule_tuple in tag["rules"] %}
+            {% do local_rules.append(rule_tuple[0]) %}
+        {% endfor %}
+        {% set tag_id = "tag_" + loop.index|string %}
+        <span id="{{ tag_id }}"{{ " " }}data-key="{% if local_rules|length > 0 %}{{ local_rules|join(" ") }}"{{ " " }}{% endif %}class="tag{{ " " }}{% if "classes" in tag and tag["classes"]|length > 0 %}{{ tag["classes"]|join(" ") }}{% endif %}">
+
+        {# End tag opening wrapper tag #}
+
+        {# Crazy topic model display hack #}
+        {#{% if "classes" in tag and tag["classes"]|length > 0 %}
+            {% for class in tag["classes"] %}<span class="tag-class{{ " " }}{{ class }}"></span>{% endfor %}
+        {% endif %}#}
+
+        {# Output tagged tokens mapped to this tag. #}
+        {% for token_index in range(tag.index_start, tag.index_end + 1) %}
+            {% set token = tokens[token_index] %}
+            {% if token[token_type_index] == token_types["WHITESPACE"] or token[token_type_index] == token_types["NEWLINE"] %}
+                {% set token_str = token[token_strs_list_index][token_whitespace_newline_str_index] %}
+            {% else %}
+                {% set token_str = token[token_strs_list_index][token_str_index] %}
+            {% endif %}
+            {#<span id="{{ token[1] }}" class="token"> #}{{ token_str }}{#</span>#}
+            {% if token_index < tag.index_end %}
+                {# Get untokenized chars in between this token and the next one #}
+                {% if token[1] + token[2] < text_str|length %}
+                    {% set untokenized_chars_pos_start = token[1] + token[2] %}
+                    {% set untokenized_chars_pos_end = tokens[token_index + 1][1] - 1 %}
+                    {% include "__text_str.html" %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {# Begin tag closing wrapper tag #}
+        </span>
+        {# End tag closing wrapper tag #}
+
+        {# There could be untokenized chars in between these tags! #}
+        {# Try outputting untagged tokens and/or untokenized chars in between this tag and the next_tag. #}
+        {% set next_tag_index = tag_index + 1 %}
+        {% if next_tag_index < tags|length %}
+            {# Cool, there is a next tag #}
+            {% set next_tag = tags[next_tag_index] %}
+
+            {# Untagged token indexes #}
+            {% set untagged_tokens_index_start = tag.index_end + 1 %}
+            {% set untagged_tokens_index_end = next_tag.index_start - 1 %}
+
+            {% include "_tokens_text_str.html" %}
+
+            {# Get untokenized chars #}
+            {% if next_pos < text_str|length %}
+                {% set untokenized_chars_pos_start = next_pos %}
+                {% set untokenized_chars_pos_end = next_tag.pos_start - 1 %}
+                {% include "__text_str.html" %}
+            {% endif %}
+
+{#        {% else %}#}
+            {# TODO: Fix missing str output #}
+            {# There could *still* be untokenized chars in between these tags!
+{#               next_pos may have been updated!#}
+{#               Untokenized char byte positions, i.e. indexes into the text_str. #}
+{#            {% set untokenized_chars_pos_start = next_pos %}#}
+{#            {% set untokenized_chars_pos_end = next_tag.pos_start - 1 %}#}
+{##}
+{#            {% include "__text_str.html" %}#}
+        {% endif %}
+    {% endfor %}
+{% endif %}

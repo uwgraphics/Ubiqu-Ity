@@ -1,0 +1,110 @@
+@import "compass/css3";
+@import "compass/utilities/text";
+@import "base";
+@import "bootstrap";
+@import "font-awesome";
+
+@include establish-baseline;
+
+%strongTextShadow {
+    text-shadow: -1px -1px 2px rgba(0,0,0,0.35),
+                  1px -1px 2px rgba(0,0,0,0.35),
+                 -1px  1px 2px rgba(0,0,0,0.35),
+                  1px  1px 2px rgba(0,0,0,0.35),
+                 //  0   -1px 1px rgba(0,0,0,0.35),
+                 //  0    1px 1px rgba(0,0,0,0.35),
+                 // -1px  0   1px rgba(0,0,0,0.35),
+                 //  1px  0   1px rgba(0,0,0,0.35),
+                  0    1px 4px rgba(0,0,0,0.65);
+}
+
+%btn-colored {
+    @include background-image( linear-gradient(top, rgba(255,255,255,1.0) 0%, rgba(230,230,230,1.0) 100%) );
+
+    &, &%btn-withFillBar > .fillBar {
+        @include background-size(auto 110%);
+    }
+
+    &%btn-withFillBar > .fillBar {
+        @include background-image( linear-gradient(top, #b3b3b3 0%, #999 100%) );
+    }
+    
+    /* Bootstrap fix */
+    &, &.active, &:hover, &:active, &:focus {
+        background-position: 0 center;
+    }
+
+    &:hover, &:focus, &:active {
+        @include background-image( linear-gradient(top, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.5) 100%) );
+    }
+
+    &%btn-withFillBar:hover > .fillBar,
+    &%btn-withFillBar:focus > .fillBar,
+    &%btn-withFillBar:active > .fillBar {
+        @include background-image( linear-gradient(top, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.25) 100%) );
+    }
+
+    &.active {
+        @include background-image( linear-gradient(top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.25) 100%) );
+        font-weight: bold;
+        color: #fff;
+        border-color: rgba(0,0,0,0.65);
+        @extend %strongTextShadow;
+    }
+
+    &%btn-withFillBar.active > .fillBar {
+        @include background-image( linear-gradient(top, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.0) 100%) );
+    }
+}
+
+%btn-checkbox {
+    // text-align: left;
+
+    i {
+        float: right;
+        margin-right: 3px;
+        line-height: inherit;
+    }
+
+    &.active i {
+        @extend .icon-ok;
+    }
+}
+
+%btn-withFillBar {
+    position: relative;
+    overflow: hidden;
+
+    & > div {
+        position: relative;
+        z-index: 1;
+    }
+
+    & > .fillBar {
+        background-color: inherit;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        outline: 1px solid rgba(0,0,0,0.15);
+        @include box-shadow(0 0 4px 2px rgba(0,0,0,0.35));
+    }
+}
+
+// .btn-group[data-toggle="buttons-checkbox"], .checkbox {
+//     @extend %btn-checkbox;
+// }
+
+#topic_model_tag_buttons .btn {
+    @extend %btn-colored, %btn-checkbox, %btn-withFillBar;
+    border-left: 0;
+    border-right: 0;
+    @include border-radius(0);
+}
+
+.withLoadingIndicator {
+    background-image: url("/static/img/ajax_loader_gray_64.gif");
+    background-repeat: no-repeat;
+    background-position: center center;
+}

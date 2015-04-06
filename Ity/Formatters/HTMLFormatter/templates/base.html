@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    {% if title %}<title>{{ title }}</title>{% endif %}
+{#    <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
+{#    <meta name="description" content="">#}
+{#    <meta name="author" content="">#}
+    <style type="text/css">
+    {% block styles %}
+        {% include "styles.css" %}
+    {% endblock %}
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div id="modal">
+        <div class="message">
+            <div class="message-header">
+                <h2>
+                    TextViewer Neue Help / Debug / Feedback
+                </h2>
+            </div>
+            <div class="message-body">
+                <h3>
+                    Text View Features
+                </h3>
+                <ul>
+                    <li><strong>Hover over a tag button in the sidebar</strong>{{ " " }}to{{ " " }}<strong style="background-color: #ffff00; border-radius: 4px;">highlight tagged words</strong>{{ " " }}in the text view.</li>
+                    <li>The reverse works, too:{{ " " }}<strong>Hover over words</strong>{{ " " }}to{{ " " }}<strong>highlight their tag in the sidebar</strong>{{ " " }} (or wait for a tooltip to appear).</li>
+                    <li>
+                        <strong>Clicking on a tag</strong>{{ " " }}adds a{{ " " }}<strong style="background-color: #00aaff; border-radius: 4px;">persistent highlight color</strong>{{ " " }} to tagged words.
+                    </li>
+                    <li>
+                        <em>All "persistently highlighted" tags and words use that same light-blue background color (for now), unless a URI parameter provides a custom color (and later, weighting) for one or more tags.</em>
+                    </li>
+                </ul>
+                <h3>
+                    Arrow Key Shortcuts
+                </h3>
+                <p>
+                    <em>To use these shortcuts, first click somewhere inside the text view.</em>
+                </p>
+                <ul>
+                    <li>Press the{{ " " }}<strong>down arrow</strong>{{ " " }}when you're at the{{ " " }}<em>bottom of a page</em>{{ " " }}to go to the{{ " " }}<strong>next page</strong>.
+                    </li>
+                    <li>Press the{{ " " }}<strong>up arrow</strong>{{ " " }}when you're at the{{ " " }}<em>top of a page</em>{{ " " }}to go to the{{ " " }}<strong>previous page</strong>.
+                    </li>
+                    <li>Press the{{ " " }}<strong>left or right arrow key</strong>{{ " " }}to move to the{{ " " }}<strong>previous or next page</strong>,{{ " " }}respectively.
+                    </li>
+                </ul>
+                {% if processing_id|length != 0 %}
+                    <h3>
+                        [Debug] Ubiqu+Ity Processing ID
+                    </h3>
+                    <ul>
+                        <li>
+                            <code id="processing_id">{{ processing_id }}</code>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="buttons">
+                <a class="modal-send-feedback" href="mailto:zthomae@wisc.edu?subject=[Ubiqu+Ity]%20TextViewer%20Neue%20Feedback%20{% if title|length != 0 %}for%20{{ title }}{% endif %}{% if processing_id|length != 0 %}%20(Processing%20ID:%20{{ processing_id }}){% endif %}">Send Feedback</a>
+                <a class="modal-close">Close</a>
+            </div>
+        </div>
+    </div>
+    <div class="bezel"></div>
+    {% block header_container %}
+    <div class="header">
+        {% block header %}{% endblock %}
+    </div>
+    {% endblock %}
+	{% block sidebar_container %}
+	<div class="sidebar">
+		{% block sidebar %}{% endblock %}
+	</div>
+	{% endblock %}
+
+	{% block content_container %}
+	<div class="content">
+		{% block content %}{% endblock %}
+	</div>
+	{% endblock %}
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

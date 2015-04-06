@@ -1,0 +1,481 @@
+@import "compass/css3";
+@import "compass/utilities/text";
+@import "base";
+@import "bootstrap";
+@import "font-awesome";
+
+@include establish-baseline;
+
+%strongTextShadow {
+    text-shadow: -1px -1px 2px rgba(0,0,0,0.35),
+                  1px -1px 2px rgba(0,0,0,0.35),
+                 -1px  1px 2px rgba(0,0,0,0.35),
+                  1px  1px 2px rgba(0,0,0,0.35),
+                 //  0   -1px 1px rgba(0,0,0,0.35),
+                 //  0    1px 1px rgba(0,0,0,0.35),
+                 // -1px  0   1px rgba(0,0,0,0.35),
+                 //  1px  0   1px rgba(0,0,0,0.35),
+                  0    1px 4px rgba(0,0,0,0.65);
+}
+
+%btn-colored {
+    @include background-image( linear-gradient(top, rgba(255,255,255,1.0) 0%, rgba(230,230,230,1.0) 100%) );
+
+    &, &%btn-withFillBar > .fillBar {
+        @include background-size(auto 110%);
+    }
+
+    &%btn-withFillBar > .fillBar {
+        @include background-image( linear-gradient(top, #b3b3b3 0%, #999 100%) );
+    }
+    
+    /* Bootstrap fix */
+    &, &.active, &:hover, &:active, &:focus {
+        background-position: 0 center;
+    }
+
+    &:hover, &:focus, &:active {
+        @include background-image( linear-gradient(top, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.5) 100%) );
+    }
+
+    &%btn-withFillBar:hover > .fillBar,
+    &%btn-withFillBar:focus > .fillBar,
+    &%btn-withFillBar:active > .fillBar {
+        @include background-image( linear-gradient(top, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.25) 100%) );
+    }
+
+    &.active {
+        @include background-image( linear-gradient(top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.25) 100%) );
+        font-weight: bold;
+        color: #fff;
+        border-color: rgba(0,0,0,0.65);
+        @extend %strongTextShadow;
+    }
+
+    &%btn-withFillBar.active > .fillBar {
+        @include background-image( linear-gradient(top, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.0) 100%) );
+    }
+}
+
+%btn-checkbox {
+    // text-align: left;
+
+    i {
+        float: right;
+        margin-right: 3px;
+        line-height: inherit;
+    }
+
+    &.active i {
+        @extend .icon-ok;
+    }
+}
+
+%btn-withFillBar {
+    position: relative;
+    overflow: hidden;
+
+    & > div {
+        position: relative;
+        z-index: 1;
+    }
+
+    & > .fillBar {
+        background-color: inherit;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        outline: 1px solid rgba(0,0,0,0.15);
+        @include box-shadow(0 0 4px 2px rgba(0,0,0,0.35));
+    }
+}
+
+.btn-group[data-toggle="buttons-checkbox"], .checkbox {
+    @extend %btn-checkbox;
+}
+
+%viewContainer {
+    position: relative;
+    @extend .well;
+    height: 100%;
+    // margin: -1px;
+    padding: 0;
+    border: 0;
+    // opacity: 0.5;
+    @include box-shadow(0 0 0 1px rgba(0,0,0,0.25));
+    // outline: 1px solid red;
+
+    %viewButtonBar {
+        @extend .navbar-inner;
+        position: absolute;
+        white-space: nowrap;
+        left: 0;
+        top: 0;
+        right: 0;
+        margin: 0;
+        border-top: 0;
+        border-left: 0;
+        border-right: 0;
+        z-index: 1;
+        @include border-radius(4px 4px 0 0);
+        padding: 0 5px;
+        height: 40px;
+
+        & > .btn-group, .navbar-form .input-prepend, & > .input-prepend, .navbar-form .input-append, & > .input-append, & > input {
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+
+        // & > input {
+        //     display: block;
+        //     width: auto;
+        // }
+    }
+
+    %view {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: 0;
+    }
+
+    %viewButtonBar ~ %view {
+        top: 40px;
+    }
+}
+
+body {
+    /* Prevents elastic scrolling on Mac OS X Lion */
+    background: #fff;
+}
+
+.vis {
+    @extend %viewContainer;
+
+    .buttonbar {
+        @extend %viewButtonBar;
+    }
+
+    .content {
+        @extend %view;
+    }
+}
+
+/* Bootstrap Fixes */
+.navbar {
+    .susyContainer {
+        @include container;
+    }
+}
+
+pre, .textContent {
+    min-width: 31em;
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+    @include adjust-font-size-to($base-font-size);
+    @include adjust-leading-to(1);
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+.btn-group > .btn + .popover + .btn {
+    margin-left: -1px;
+    padding: 4px 8px;
+}
+
+.nav-list li > * {
+    // width: 100%;
+    @include ellipsis;
+}
+
+.row-fluid .corpus.well {
+    &:nth-child(2n + 1) {
+        margin-left: 0;
+    }
+}
+
+/* The Real Action Starts Here */
+
+#container {
+    @include container;
+    margin-top: 80px;
+    margin-bottom: 30px;
+    // @include susy-grid-background;
+
+    &.absolute {
+        position: absolute;
+        // background: rgba(0,0,0,0.35);
+        margin: 0;
+        left: 0;
+        right: 0;
+        top: 80px;
+        z-index: 1;
+        padding-top: $gutter-width;
+        padding-bottom: 0;
+        bottom: 30px;
+    }
+}
+
+#topNav.navbar {
+    .nav {
+        float: right;
+        margin: 0;
+    }
+}
+
+#filters.navbar {
+    top: 40px;
+}
+
+#hierarchy.breadcrumb {
+    @include span-columns(8);
+    margin: 0;
+    padding: 10px 0;
+    width: auto;
+    background: transparent;
+    padding-right: 5px;
+    white-space: nowrap;
+
+    & > li > .btn-group, & > li > .btn {
+        margin: -8px 0 -4px;
+    }
+
+    a.btn span {
+        padding-left: 2px;
+    }
+
+    // & > li.active {
+
+    //     & > a {
+    //         background-color: #0088cc;
+    //         color: #fff;
+    //         text-shadow: none;
+    //         @include box-shadow(0 1px 0 #fff);
+    //         @include border-radius(5px);
+    //         padding: 5px;
+
+    //         i ~ span {
+    //             padding-right: 3px;
+    //         }
+
+    //         &:hover {
+    //             background-color: #005580;
+    //             text-decoration: none;
+    //         }
+
+    //         .icon-caret-down {
+    //             opacity: 0.65;
+    //         }
+    //     }
+    // }
+
+    .active.dropdown a.dropdown-toggle {
+        // color: #8800cc;
+
+        // &:hover {
+        //     color: #550080;
+        // }
+    }
+
+    .dropdown-menu li {
+        display: block;
+        text-shadow: none;
+    }
+}
+
+.content.loadingIndicator {
+    background-image: url("/static/img/ajax_loader_gray_64.gif");
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+// #actions {
+//     @include span-columns(4 omega);
+// }
+
+.sidebar {
+    .content > div:first-child {
+        margin-top: 0;
+    }
+
+    .content > div:last-child {
+        margin-bottom: 0;
+    }
+
+    .content > div {
+        display: block;
+        margin: 0 0 10px;
+    }
+
+    .nav-header {
+        padding-left: 12px;
+        padding-right: 14px;
+    }
+
+    .sidebarSearch .input-append {
+        position: relative;
+        float: left;
+        width: 100%;
+        input {
+            position: absolute;
+            float: left;
+            left: 0;
+            top: 0;
+            width: auto;
+            right: 36px;
+        }
+
+        button {
+            float: right;
+        }
+    }
+
+    .content *[data-toggle="buttons-checkbox"] {
+        .btn {
+            @extend %btn-colored, %btn-checkbox, %btn-withFillBar;
+            border-left: 0;
+            border-right: 0;
+            @include border-radius(0);
+        }
+
+        .btn.nav-header {
+            font-size: 12px;
+            text-align: left;
+            background: none;
+            color: #0088cc;
+            border: 0;
+            @include box-shadow(none);
+
+
+            &.active {
+                color: #0088cc;
+                text-shadow: none;
+            }
+
+            &:hover, &.active:hover {
+                background-color: #0088cc;
+                color: #fff;
+                text-shadow: none;
+                text-decoration: underline;
+            }
+
+            &:active, &.active:active {
+                background-color: #005580;
+            }
+        }
+
+        // .btn-link {
+        //     @extend %btn-checkbox, .btn-inverse;
+        //     display: block;
+        //     width: 100%;
+        //     margin: 0;
+        // }
+    }
+}
+
+.nav-header a i {
+    float: right;
+    margin-right: 4px;
+}
+
+#sidebar {
+    @extend .sidebar;
+}
+
+.main .content {
+    padding: 10px;
+}
+
+#vis0 {
+    .content {
+        padding: 10px;
+        @include adjust-font-size-to(12px);
+    }
+}
+
+footer {
+    @include adjust-font-size-to(12px);
+    // background: #efefef;
+    // @include adjust-leading-to(1, 30px);
+    background: inherit;
+    color: #808080;
+    font-weight: 500;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    white-space: nowrap;
+    height: 20px;
+    padding: 5px 12px;
+    text-align: center;
+
+    ul {
+        display: inline-block;
+        margin: 0 auto;
+        background: inherit;
+    }
+
+    li {
+        display: inline;
+    }
+
+    li + li:before,
+    ul + ul:before,
+    ul.pull-left + ul.pull-left:before,
+    ul.pull-right + ul.pull-right:after {
+        content: "•";
+        color: #ccc;
+        padding: 0 10px;
+    }
+
+    ul:not(.pull-left) + ul.pull-left:before,
+    ul.pull-right + ul:not(.pull-right):before,
+    ul:not(.pull-right) + ul.pull-right:before,
+    ul.pull-right + ul.pull-right:before {
+        display: none;
+    }
+}
+
+#container:not(.absolute) ~ footer {
+    @include box-shadow(0 -1px 2px rgba(0,0,0,0.15));
+}
+
+/* Default Column Layout */
+
+.sidebar {   
+    @include span-columns(2);
+}
+
+.main {
+    z-index: 2;
+    @include span-columns($total-columns - 2 omega);
+}
+
+.sidebar.wide {   
+    @include span-columns(3);
+}
+
+.sidebar.wide ~ .main {   
+    @include span-columns($total-columns - 3 omega);
+}
+
+#vis0 {
+    @include span-columns(7);
+}
+
+#vis1 {
+    @include span-columns(3 omega);
+}
+
+#vis2, #vis3 {
+    display: none;
+}
+
+@import "media";

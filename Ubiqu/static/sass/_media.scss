@@ -1,0 +1,297 @@
+@include at-breakpoint(0px 6 $not-so-tiny-width - 1px) {
+    // $container-style: fluid;
+    $column-width   : 5em;
+    $gutter-width   : 0em;
+    $grid-padding   : 0em;
+
+    #container {
+        @include container;
+        // @include susy-grid-background;
+        &.absolute {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+    }
+
+    %viewContainer {
+        @include border-radius(0);
+
+        %viewButtonBar .btn span {
+            display: none;
+        }
+    }
+
+    .row-fluid .corpus.well {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    #container.absolute ~ footer {
+        background: #efefef;
+    }
+
+    #hierarchy.breadcrumb {
+        .home, .corpus {
+            a.btn span {
+                display: none;
+            }
+        }
+    }
+
+    .sidebar {
+        @include span-columns(2);
+
+        // dt, dd {
+        //     margin: 0;
+        // }
+
+        .content .btn {
+            font-size: 12px;
+            line-height: 16px;
+        }
+
+        // .btn {
+        //     border-left: 0;
+        //     border-right: 0;
+        //     @include border-radius(0);
+        // }
+    }
+
+    .main {
+        @include span-columns($total-columns - 2 omega);
+    }
+
+    .sidebar.wide {   
+        @include span-columns(3);
+    }
+
+    .sidebar.wide ~ .main {   
+        @include span-columns($total-columns - 3 omega);
+    }
+
+    #vis0 {
+        @include span-columns(4 omega);
+
+        .content {
+            @include adjust-font-size-to(10px);
+        }
+    }
+
+    #vis1 {
+        display: none;
+    }
+}
+
+/* One Alternate Visualization */
+
+@include at-breakpoint($not-so-tiny-width 9 $wide-width - 1px) {
+    // $container-style: fluid;
+    $column-width   : 5em;
+    $gutter-width   : 0em;
+    $grid-padding   : 0em;
+
+    #container {
+        @include container;
+        // @include susy-grid-background;
+
+        &.absolute {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+    }
+
+    %viewContainer {
+        @include border-radius(0);
+    }
+
+    .row-fluid .corpus.well {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    #container.absolute ~ footer {
+        background: #efefef;
+    }
+
+    .sidebar {
+        @include span-columns(2);
+
+        // dt, dd {
+        //     margin: 0;
+        // }
+
+        .content .btn {
+            font-size: 12px;
+            line-height: 16px;
+        }
+
+        // .btn {
+        //     border-left: 0;
+        //     border-right: 0;
+        //     @include border-radius(0);
+        // }
+    }
+
+    .main {
+        @include span-columns($total-columns - 2 omega);
+    }
+
+    .sidebar.wide {   
+        @include span-columns(3);
+    }
+
+    .sidebar.wide ~ .main {   
+        @include span-columns($total-columns - 3 omega);
+    }
+
+    #vis0 {
+        @include span-columns(5);
+
+        .content {
+            @include adjust-font-size-to(10px);
+        }
+    }
+
+    #vis1 {
+        display: block;
+        @include span-columns(2 omega);
+    }
+}
+
+@include at-breakpoint($wide-width 11 853px) {
+    // $container-style: magic;
+    $column-width   : 4em;
+    $gutter-width   : 1em;
+    $grid-padding   : $gutter-width;
+
+    #container {
+        @include container;
+        // @include susy-grid-background;
+    }
+
+    .sidebar {
+        @include span-columns(2);
+    }
+
+    .main {
+        @include span-columns($total-columns - 2 omega);
+    }
+
+    .sidebar.wide {   
+        @include span-columns(3);
+    }
+
+    .sidebar.wide ~ .main {   
+        @include span-columns($total-columns - 3 omega);
+    }
+
+    #vis0 {
+        @include span-columns(6);
+
+        .content {
+            @include adjust-font-size-to(12px);
+        }
+    }
+
+    #vis1 {
+        display: block;
+        @include span-columns(3 omega);
+    }
+}
+
+/* Two Alternate Visualizations */
+
+// @include at-breakpoint(854px 12) {
+//     // $container-style: fluid;
+//     $column-width   : 4em;
+//     $gutter-width   : 1em;
+//     $grid-padding   : $gutter-width;
+
+//     #container {
+//         @include container;
+//         // @include susy-grid-background;
+//     }
+
+//     .sidebar {
+//         @include span-columns(2);
+//     }
+
+//     #main {
+//         @include span-columns(6);
+//     }
+
+//     #vis1, #vis2 {
+//         display: block;
+//         @include span-columns(2);
+//     }
+
+//     #vis2 {
+//         @include omega;
+//     }
+// }
+
+@include at-breakpoint(1064px 11) {
+    #vis0 {
+        .content {
+            @include adjust-font-size-to(14px);
+        }
+    }
+}
+
+@include at-breakpoint(1204px 11) {
+    #vis0 {
+        .content {
+            @include adjust-font-size-to(16px);
+        }
+    }
+}
+//     #container {
+//         @include container;
+//         // @include susy-grid-background;
+//     }
+
+//     .sidebar {
+//         @include span-columns(2);
+//     }
+
+//     #main {
+//         @include span-columns(6);
+//     }
+
+//     #vis1, #vis2 {
+//         display: block;
+//         @include span-columns(3);
+//     }
+
+//     #vis2 {
+//         @include omega;
+//     }
+// }
+
+/* Three Alternate Visualizations */
+
+// @include at-breakpoint(1204px 17) {
+//     #container {
+//         @include container;
+//         // @include susy-grid-background;
+//     }
+
+//     .sidebar {
+//         @include span-columns(2);
+//     }
+
+//     #vis0 {
+//         @include span-columns(6);
+//     }
+
+//     #vis1, #vis2, #vis3 {
+//         display: block;
+//         @include span-columns(3);
+//     }
+
+//     #vis3 {
+//         @include omega;
+//     }
+// }

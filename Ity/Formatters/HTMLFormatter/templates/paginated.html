@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block styles %}
+    {% include "styles.css" %}
+    {% include "standalone/css/screen.css" %}
+{% endblock %}
+
+{% block header %}
+    {% if title %}
+        <h1 title="{{ processing_id }}">
+            {% if page_relative_path|length != 0 %}
+                <a href="{{ page_relative_path }}">{{ title }}</a>
+            {% else %}
+                {{ title }}
+            {% endif %}
+        </h1>
+    {% endif %}
+    <a class="sidebar-reset reset-tag-visibility warning">Reset Tag Colors &amp; Visibility</a>
+    <a class="display-help">Help / Debug / Feedback</a>
+{% endblock %}
+
+{% block content %}
+    <div class="page_window">
+        <div class="page page_window_prev"></div>
+        <div class="page page_window_current"></div>
+        <div class="page page_window_next"></div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{% if tags is not none %}
+<script type="text/javascript">
+    var tags = {{ tags | safe }};
+</script>
+{% endif %}
+{% if pages is not none %}
+<script type="text/javascript">
+    var pages = {{ pages | safe }};
+</script>
+{% endif %}
+<script type="text/javascript">
+    {% include "standalone/standalone.js" %}
+</script>
+{% endblock %}

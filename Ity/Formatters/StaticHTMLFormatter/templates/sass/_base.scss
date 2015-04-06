@@ -1,0 +1,68 @@
+// ---------------------------------------------------------------------------
+// Imports
+
+@import "susy";
+@import "compass/utilities/text/ellipsis";
+
+// ---------------------------------------------------------------------------
+// Basic Grid
+
+$total-columns  : 12;
+$column-width   : 4em;
+$gutter-width   : 1em;
+$grid-padding   : $gutter-width;
+
+$show-grid-backgrounds  : true;
+
+$container-style: fluid;
+$container-width: 640px;
+
+$sidebar-width: 240px;
+$pager-width: 64px;
+$header-height: 36px;
+
+%page_block_link {
+	display: block;
+	text-align: center;
+	line-height: 300%;
+	color: #0088cc;
+	cursor: pointer;
+	outline: 1px solid #efefef;
+	margin-bottom: 1px;
+
+	&.warning {
+		color: #cc0000;
+	}
+
+	&:hover, &:focus {
+		color: #fff;
+		background: #00aaff;
+	}
+
+	&:active {
+		color: #fff;
+		background: #0088cc;
+	}
+
+	&.highlight, &.active.highlight {
+		background: #ffff00 !important;
+		color: #000;
+	}
+
+	&.warning:hover, &.warning:focus, &.highlight-red, &.active.highlight-red {
+		background: #ff0000;
+		color: #fff;
+	}
+
+	&.warning:active {
+	background: #cc0000;
+    }
+
+  	&.disabled {
+		&, &:hover, &:focus, &:active, &.warning:hover, &.warning:focus, &.warning:active {
+            background: #efefef;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+	}
+}

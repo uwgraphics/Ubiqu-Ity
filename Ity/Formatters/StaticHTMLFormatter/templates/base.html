@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    {% if title %}<title>{{ title }}</title>{% endif %}
+    <style type="text/css">
+        {% include "css/html-formatter.css" %}
+    </style>
+    <style type="text/css">
+    {% block styles %}
+        {% include "css/screen.css" %}
+    {% endblock %}
+    </style>
+</head>
+
+<body>
+<div class="container">
+    {% block header_container %}
+    <div class="header">
+        {% block header %}{% endblock %}
+    </div>
+    {% endblock %}
+	{% block sidebar_container %}
+	<div class="sidebar">
+		{% block sidebar %}{% endblock %}
+	</div>
+	{% endblock %}
+
+	{% block content_container %}
+	<div class="content">
+		{% block content %}{% endblock %}
+	</div>
+	{% endblock %}
+    <div class="pagers"></div>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,13 @@
+<div class="html_formatter">
+
+{% for token in tokens %}
+    {% if token.tag %}
+        <span data-key="{{ token.tag }}" class="tag">
+            <span class="token" id="{{ token.pos_start }}">{{ token.text|e }}</span>
+        </span>
+    {% else %}
+        <span class="token untagged" id="{{ token.pos_start }}">{{ token.text|e }}</span>
+    {% endif %}
+{% endfor %}
+
+</div>

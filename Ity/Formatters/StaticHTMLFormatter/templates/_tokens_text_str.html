@@ -1,0 +1,43 @@
+{# Untagged, Tokenized Output #}
+
+{# Are there untagged tokens between the end of tag and the start of next_tag? #}
+{% if
+    tokens is defined and
+    text_str is defined and
+    untagged_tokens_index_start is defined and
+    untagged_tokens_index_end is defined and
+    tokens is defined and
+    untagged_tokens_index_start < tokens|length and
+    untagged_tokens_index_end < tokens|length and
+    untagged_tokens_index_end + 1 - untagged_tokens_index_start > 0
+%}
+    {# TODO: Output untokenized chars BEFORE first token!!! #}
+
+    {# We have untagged tokens, so let's output 'em. #}
+    {% for token_index in range(untagged_tokens_index_start, untagged_tokens_index_end + 1) %}
+        {% set token = tokens[token_index] %}
+        {% if token[token_type_index] == token_types["WHITESPACE"] or token[token_type_index] == token_types["NEWLINE"] %}
+            {% set token_str = token[token_strs_list_index][token_whitespace_newline_str_index] %}
+        {% else %}
+            {% set token_str = token[token_strs_list_index][token_str_index] %}
+        {% endif %}
+{#        <h2>tokens[{{ untagged_tokens_index_start }}:{{ untagged_tokens_index_end + 1 }}]</h2>#}
+        <span id="{{ token[1] }}" class="token">{{ token_str }}</span>
+
+        {# Get the next position by adding the current token's position and length #}
+        {% set next_pos = token[1] + token[2] %}
+
+        {# TODO: Fix missing str output #}
+
+        {# There could be untokenized chars in between these tokens! #}
+        {% set next_token_index = token_index + 1 %}
+        {% if next_token_index < (untagged_tokens_index_end + 1) %}
+            {% set next_token = tokens[next_token_index] %}
+            {# Untokenized char byte positions, i.e. indexes into the text_str. #}
+            {% set untokenized_chars_pos_start = next_pos %}
+            {% set untokenized_chars_pos_end = next_token[1] - 1 %}
+
+            {% include "__text_str.html" %}
+        {% endif %}
+    {% endfor %}
+{% endif %}

@@ -1,0 +1,75 @@
+{% set max_height = 2048 %}
+{% set max_width = 512 %}
+{% set stroke_width = 4 %}
+{# Temporarily hard-coded #}
+{% set num_tag_map_boxes = 50 %}
+{% set page_size = 8000 %}
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="-{{ stroke_width }}, -{{ stroke_width }}, {{ max_width + stroke_width }}, {{ max_height + stroke_width }}" preserveAspectRatio="none" class="topic_model_line_graph" data-text-name="{{ text_name }}">
+    <defs>
+        <rect id="bounds_rect" x="0" y="0" width="{{ max_width }}" height="{{ max_height }}"/>
+    </defs>
+
+    {# Pagination boxes #}
+{#    <g class="page_locators">#}
+    {% set num_pages = (tag_maps|length / page_size)|round(0, 'ceil')|int %}
+    {% set page_box_height = (max_height / num_pages)|round(0, 'ceil')|int %}
+    {% for page_index in range(0, num_pages) %}
+        <g class="page_locator" data-page-index="{{ page_index }}" data-first-tag-map="{{ page_index * page_size + 1 }}" data-last-tag-map="{{ page_index * page_size + page_size }}">
+            <rect
+                x="0"
+                y="{{ (page_index * page_box_height)|int }}"
+                width="{{ max_width }}"
+                height="{{ page_box_height }}"
+            />
+        </g>
+    {% endfor %}
+{#    </g>#}
+
+{#    <g class="tag_map_locators">#}
+    {# Tag Map Boxes #}
+    {% set tag_map_box_step_size = (tag_maps|length / num_tag_map_boxes)|round(0, 'ceil')|int %}
+    {% set tag_map_box_height = (max_height / (num_tag_map_boxes - 1))|int %}
+    {% for tag_map_box_index in range(0, num_tag_map_boxes) %}
+        {% set first_tag_map = (tag_map_box_index * tag_map_box_step_size)|round(0, 'floor')|int + 1 %}
+        {% set last_tag_map = first_tag_map + tag_map_box_step_size %}
+        {% set tag_map_href = "#tag_map_" + first_tag_map|string %}
+        {% set page_index = ((first_tag_map - 1) / page_size)|int %}
+        <a class="tag_map_locator" xlink:href="{{ tag_map_href }}" data-first-tag-map="{{ first_tag_map }}" data-last-tag-map="{{ last_tag_map }}" data-page-index="{{ page_index }}">
+            <rect
+                x="0"
+                y="{{ (tag_map_box_index * tag_map_box_height)|int }}"
+                width="{{ max_width }}"
+                height="{{ tag_map_box_height }}"
+            />
+        </a>
+    {% endfor %}
+{#    </g>#}
+
+    {% if max_window_score > 0 %}
+        {% for topic_key, topic_windows in window_scores.items() %}
+            {# These need to be unique to this document, otherwise weird things will happen when in a DOM with similar SVGs! #}
+            {% set polyline_id = topic_key + "_polyline_" + text_name %}
+            <defs>
+                <polyline
+                    id="{{ polyline_id }}"
+                    class="{{ topic_key }}"
+                    points="
+                    {# Repeat first point #}
+                    {{ (topic_windows[0] / max_window_score * max_width)|string }},{{ (0 / (window_scores.values()[0]|length - 1) * max_height - stroke_width)|string }}{{ " " }}
+                    {% for i in range(0,topic_windows|length) %}
+                        {{ (topic_windows[i] / max_window_score * max_width)|string }},{{ (i / (window_scores.values()[0]|length - 1) * max_height)|string }}{{ " " }}
+                    {% endfor %}
+                    {# Repeat last point #}
+                    {{ (topic_windows[topic_windows|length - 1] / max_window_score * max_width)|string }},{{ ((topic_windows|length - 1) / (window_scores.values()[0]|length - 1) * max_height + stroke_width)|string }}{{ " " }}
+                    " {# Yeah, don't miss this end double quote character! #}
+                />
+            </defs>
+            <g class="{{ topic_key }}" data-key="{{ topic_key }}" style="clip-path: url(#bounds_rect);">
+                <use class="polyline_shadow" xlink:href="#{{ polyline_id }}"/>
+                <use class="polyline" xlink:href="#{{ polyline_id }}"/>
+            </g>
+        {% endfor %}
+    {% else %}
+        <text>None of the selected topics appear in this text.</text>
+    {% endif %}
+</svg>

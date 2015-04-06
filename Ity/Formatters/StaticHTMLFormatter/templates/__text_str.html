@@ -1,0 +1,14 @@
+{# Untagged, Untokenized Char Output #}
+
+{# Are there untokenized chars between the end of tag and the start of next_tag? #}
+{% if
+    text_str is defined and
+    untokenized_chars_pos_start is defined and
+    untokenized_chars_pos_end is defined and
+    untokenized_chars_pos_start < text_str|length and
+    untokenized_chars_pos_end < text_str|length and
+    untokenized_chars_pos_end + 1 - untokenized_chars_pos_start > 0
+%}
+    {# This needs to be in a <span>, due to the CSS technique used to remove whitespace between inline elements. #}
+    {# <span id="{{ untokenized_chars_pos_start }}" class="str"> #}{{ text_str[untokenized_chars_pos_start:untokenized_chars_pos_end + 1] }}{# </span> #}
+{% endif %}

@@ -1,0 +1,64 @@
+{% extends "base_layout.html" %}
+
+{% block head %}
+<style type="text/css">
+    .box {
+        padding: 0 20px 20px; background: #fff;
+    }
+</style>
+{# Refresh the page every however-many seconds if we don't have a result yet. #}
+{% if message["state"] != "PENDING" and message["state"] != "SUCCESS" and message["state"] != "FAILURE" %}
+    <meta http-equiv="refresh" content="{{ refresh }}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row-fluid">
+    <div id="content" class="offset2 span8 with_shadow box" style="margin-bottom: 10px">
+        <div class="hero-unit" style="padding: 20px 0 0; margin-bottom: 0; text-align: center;">
+            <h1>{{ app_name }}</h1>
+            <small>A Visualizing English Print app from the University of Wisconsin&ndash;Madison</small>
+            <p>Status for Upload <code>{{ tid }}</code>{% if message["state"] != "PENDING" and message["state"] != "SUCCESS" and message["state"] != "FAILURE" %}<br>(Refreshed every {{ refresh }} seconds){% endif %}</p>
+        </div>
+        <div class="message">
+            {% if message["state"] == "PENDING" %}
+                <div class="alert alert-block alert-error">
+                    <h3 style="margin-top: 0">Corpus Processing Task Not Found.</h3>
+                    We don't have a record of this corpus processing task on the server.<br><br>
+                    You may want to <a href="{{ url_for('index') }}">return to the Ubiqu+Ity Home Page</a> and try uploading a new corpus.
+                </div>
+            {% elif message["state"] == "SENT" %}
+                <div class="alert alert-block">
+                    <h3 style="margin-top: 0">Sent to Server&hellip;</h3>
+                    Please wait.
+                </div>
+            {% elif message["state"] == "PROGRESS" %}
+                <div class="alert alert-block alert-info">
+                    <h3 style="margin-top: 0">Processing&hellip;</h3>
+                    <div class="progress progress-striped active" style="margin-right: -21px; margin-bottom: 0">
+                        <div class="bar" style="width: {{ message["current"] / message["total"]|round * 100 }}%;"></div>
+                    </div>
+                </div>
+            {% elif message["state"] == "SUCCESS" %}
+                <div class="alert alert-block alert-success">
+                    <h3 style="margin-top: 0">Complete!</h3>
+                    <a href="{{ message["csv"] }}">Download CSV</a><ul><li>Contains tagging statistics for each text.</li></ul><br>
+                    <a href="{{ message["zip"] }}">Download ZIP Archive</a><ul><li>Contains the above CSV + self-contained HTML text viewers for each text.</li></ul>
+                </div>
+            {% elif message["state"] == "FAILURE" %}
+                <div class="alert alert-block alert-error">
+                    <h3 style="margin-top: 0">Failed!</h3>
+                    Oh hey, that's not great. We got some error output, though, so we'll take a look. Sorry about that!
+                </div>
+            {% endif %}
+            <small><a href="{{ url_for('index') }}">Ubiqu+Ity Home Page</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;<a href="mailto:jkohlmann@wisc.edu?subject=Feedback%20for%Ubiqu+Ity%20Task%20{{ tid }}">Email Feedback About This Task</a></small>
+        </div>
+        {% if message["state"] != "SUCCESS" and message["state"] != "FAILURE" and False %}
+            <button class="btn email">Yawn. Email me when it's done!</button>
+            <form id="email_form">
+
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

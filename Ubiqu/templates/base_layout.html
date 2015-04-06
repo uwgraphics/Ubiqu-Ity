@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+{# Thanks to http://stackoverflow.com/a/7027035/1991086 #}
+{% if config and config.NAME %}
+    {% set app_name=config.NAME %}
+{% else %}
+    {% set app_name="Ubiqu+Ity" %}
+{% endif %}
+
+{% if not ui_size %}
+    {% set ui_size="small" %}
+{% endif %}
+
+{% if not ui_color %}
+    {% set ui_color="" %}
+{% endif %}
+
+{% set body_class="" %}
+{% if config.DEBUG == True %}
+    {% set body_class = body_class + " " + "debug" %}
+{% endif %}
+{% if config.TESTING == True %}
+    {% set body_class = body_class + " " + "testing" %}
+{% endif %}
+{% if ui_color and ui_color !="" %}
+    {% set body_class = body_class + " " + "body-" + ui_color %}
+{% endif %}
+
+{% set navbar_class="navbar" %}
+{% set navbar_size_class=navbar_class %}
+{% set navbar_color_class=navbar_class %}
+{% set navbar_size_class="" %}
+{% set navbar_color_class="" %}
+{% if ui_size and ui_size !="" %}
+    {% set navbar_size_class="navbar navbar-" + ui_size %}
+    {% set navbar_class = navbar_class + " " + navbar_size_class %}
+{% endif %}
+{% if ui_color and ui_color !="" %}
+    {% set navbar_color_class="navbar navbar-" + ui_color %}
+    {% set navbar_class = navbar_class + " " + navbar_color_class %}
+{% endif %}
+
+{% set btn_class="btn" %}
+{% set btn_size_class=btn_class %}
+{% set btn_color_class=btn_class %}
+{% if ui_size and ui_size !="" %}
+    {% set btn_size_class="btn btn-" + ui_size %}
+    {% set btn_class = btn_class + " " + btn_size_class %}
+{% endif %}
+{% if ui_color and ui_color !="" %}
+    {% set btn_color_class="btn btn-" + ui_color %}
+    {% set btn_class = btn_class + " " + btn_color_class %}
+{% endif %}
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ app_name }}{% if title %} &mdash; {{ title }}{% endif %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='font-awesome/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-additions.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/btn-group-tag.css') }}">
+
+    {% if css %}
+    <style type="text/css">
+{{ css|safe }}
+    </style>
+    {% endif %}
+
+    {% block head %}{% endblock %}
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+</head>
+<body class="{{ body_class }}">
+
+    {%  block floating_divs %}
+    {% endblock %}
+
+    {% block body %}
+    {% if alert_info and alert_info != '' %}
+    <div class="alert alert-info">
+        {{ alert_info }}
+    </div>
+    {% endif %}
+
+    <div class="container">
+        {% block content %}
+        <div id="content" class="span12">
+            Content goes here.
+        </div>
+        {% endblock %}
+    </div>
+    {% endblock %}
+
+    <!-- JavaScript -->
+    <script type="text/javascript" src="{{ url_for("static", filename="js/jquery/jquery-1.9.1.js") }}"></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="bootstrap/js/bootstrap.js") }}"></script>
+{#    <script type="text/javascript" src="{{ url_for("static", filename="js/d3/d3.v3.js") }}"></script>#}
+    <script type="text/javascript" src="{{ url_for("flask_util_js") }}"></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="js/date.js") }}"></script>
+    <!-- jQuery Plugins -->
+    <script type="text/javascript" src="{{ url_for("static", filename="js/jquery/jquery.form.js") }}"></script>
+
+{% if script %}
+    <script type="text/javascript" src="{{ url_for("static", filename="js/" + script + ".js") }}"></script>
+{% endif %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1 @@
+from DocuscopeTagger import DocuscopeTagger

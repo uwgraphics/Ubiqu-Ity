@@ -1,0 +1,12 @@
+{% for i in range(tokens|length) %}
+    {% if tags[i] >= 0 %}
+    <span class="topic_{{ tags[i] }}{{ ' ' }}
+                 freq{{ freqBins[i] }}{{ ' ' }}
+                 ig{{ igBins[i] }}{{ ' ' }}
+                 sal{{ salBins[i] }}">
+    {% else %}
+    <span>
+    {% endif %}
+        {{ tokens[i][token_strs_index][token_str_to_output_index] }}
+    </span>
+{% endfor %}

@@ -1,0 +1,26 @@
+/* Imports */
+@import "compass/typography/vertical_rhythm";
+@import "susy";
+
+/* Susy */
+$total-columns  : 12;
+$column-width   : 4em;
+$gutter-width   : 1em;
+$grid-padding   : $gutter-width;
+/* 1024px */
+// $container-width: 80em;
+$container-style: fluid;
+// $show-grid-backgrounds  : true;
+
+/* Compass Vertical Rhythm */
+$relative-font-sizing : true;
+$round-to-nearest-half-line: true;
+$base-font-size       : 14px;
+$base-line-height     : 20px;
+
+/* Required for linear-gradient() Compass mixin to support IE9 */
+/* There may or may not have been graphical artifacts present in the SVG version on a MacBook Pro 15" with Retina display. Still investigating. */
+$experimental-support-for-svg: true;
+
+$not-so-tiny-width: 644px;
+$wide-width: 784px;

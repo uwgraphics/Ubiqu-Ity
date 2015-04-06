@@ -1,0 +1,17 @@
+{# Include a minimal stylesheet; this is required to correctly display formatted whitespace. #}
+{% if not standalone %}
+<style type="text/css">
+    {% include "css/html-formatter.css" %}
+</style>
+{% endif %}
+<div class="html-formatter" data-formatter="StaticHTMLFormatter">
+    {% if tags %}
+        <h2>Received Tags</h2>
+    {% endif %}
+    {% if tokens %}
+        <h2>Received Tokens</h2>
+    {% endif %}
+    {% if text_str %}
+        <h2>Received Text String</h2>
+    {% endif %}
+</div>

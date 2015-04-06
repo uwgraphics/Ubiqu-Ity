@@ -1,0 +1,45 @@
+{# Tagged and Tokenized Output #}
+
+{% if
+    tags is defined and
+    tags|length == 2 and
+    tokens is defined and
+    input_file is defined
+%}
+
+<AnnotatedText File="{{ input_file }}">
+{% set tag_rules = tags[0] %}
+{% set tag_data = tags[1] %}
+
+{# TODO: Output untagged tokens and/or untokenized chars BEFORE first tag!!! #}
+
+{% for tag_index in range(0, tag_data|length) %}
+    {% set tag = tag_data[tag_index] %}
+    {% set next_pos = tag.pos_end + tag.token_end_len %}
+
+    {# Begin tag opening wrapper #}
+    {% set rules = [] %}
+    {% for rule_tuple in tag["rules"] %}
+        {% do rules.append(rule_tuple[0]) %}
+    {% endfor %}
+    {% set tag_id = "tag_" + loop.index|string %}
+    <A LAT="{% if rules|length > 0 %}{{ rules[0] }}{% endif %}">
+
+    {# End tag opening wrapper #}
+
+    {# Output tagged tokens mapped to this tag. #}
+    {% for token in tokens[tag.index_start:tag.index_end + 1] %}
+        {% if token[token_type_index] == token_types["WHITESPACE"] or token[token_type_index] == token_types["NEWLINE"] %}
+            {% set token_str = " " %}
+        {% else %}
+            {% set token_str = token[token_strs_index][token_str_to_output_index] %}
+        {% endif %}
+    {{ token_str }}
+    {% endfor %}
+
+    </A>
+
+
+    {% endfor %}
+</AnnotatedText>
+{% endif %}

@@ -1,0 +1,28 @@
+{# Are there untagged tokens between the end of tag and the start of next_tag? #}
+{% if
+    untagged_tokens_index_start is defined and
+    untagged_tokens_index_end is defined and
+    tokens is defined and
+    untagged_tokens_index_start < tokens|length and
+    untagged_tokens_index_end < tokens|length and
+    untagged_tokens_index_end + 1 - untagged_tokens_index_start > 0
+%}
+    {# We have untagged tokens, so let's output 'em. #}
+    {% for token in tokens[untagged_tokens_index_start:untagged_tokens_index_end + 1] %}
+        {% set token_str = token[token_strs_list_index][token_str_index] %}
+        <span id="{{ token[1] }}">{{ token_str }}</span>
+
+        {# Is this the last token? If so, update next_pos if it's
+           going to be greater than the current next_pos after
+           outputting these tokens. #}
+        {% if loop.last %}
+            {% set next_pos_after_last_token = token[1] + token[2] %}
+            {% if
+                next_pos is not defined or
+                (next_pos is defined and next_pos_after_last_token > next_pos and next_pos_after_last_token < text_str|length)
+            %}
+                {% set next_pos = next_pos_after_last_token %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
