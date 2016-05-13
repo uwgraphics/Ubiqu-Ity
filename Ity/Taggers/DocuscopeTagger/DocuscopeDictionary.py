@@ -71,15 +71,6 @@ class DocuscopeDictionary:
         # short rules are rules where the word itself is a rule
         self.shortRules = dict()
         self.words = dict()
-        # t1 = clock()
-        # self.tokenizer = RegexTokenizer(
-        #     case_sensitive=False,
-        #     excluded_token_types=[
-        #         RegexTokenizer.TYPES["WHITESPACE"],
-        #         RegexTokenizer.TYPES["NEWLINE"]
-        #     ]
-        # )
-
         self.lats, self.dims, self.clusts = getLatFileList(self.directory)
 
         with openAny(self.directory, ["_wordclasses.txt", "wordclasses.txt"]) as f:

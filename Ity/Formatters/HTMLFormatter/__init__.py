@@ -36,6 +36,7 @@ class HTMLFormatter(Formatter):
             loader=FileSystemLoader(searchpath=self.template_root),
             extensions=[
                 'jinja2.ext.do',
+                # comment out the line below for uncompressed html
                 'Support.jinja2_htmlcompress.jinja2htmlcompress.HTMLCompress',
                 AssetsExtension
             ]

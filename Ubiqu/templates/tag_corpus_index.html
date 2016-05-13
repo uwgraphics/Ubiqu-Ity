@@ -16,9 +16,9 @@
 <div class="row-fluid">
     <div id="content" class="offset2 span8 with_shadow box" style="margin-bottom: 10px">
         <div class="hero-unit" style="padding: 20px 0 0; margin-bottom: 0; text-align: center;">
-            <h1>{{ app_name }}</h1>
+            <h1>{{ app_name }} 1.1</h1>
             <small>A Visualizing English Print app from the University of Wisconsin&ndash;Madison</small>
-            <p>Status for Upload <code>{{ tid }}</code>{% if message["state"] != "PENDING" and message["state"] != "SUCCESS" and message["state"] != "FAILURE" %}<br>(Refreshed every {{ refresh }} seconds){% endif %}</p>
+            <p>Status for Upload {% if name!="~" %} {{ name }} {% endif %} <br> <code>{{ tid }}</code>{% if message["state"] != "PENDING" and message["state"] != "SUCCESS" and message["state"] != "FAILURE" %}<br>(Refreshed every {{ refresh }} seconds){% endif %}</p>
         </div>
         <div class="message">
             {% if message["state"] == "PENDING" %}

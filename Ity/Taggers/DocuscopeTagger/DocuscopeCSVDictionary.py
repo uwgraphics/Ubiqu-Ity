@@ -25,17 +25,14 @@ class DocuscopeCSVDictionary(BaseClass):
         if self.rules_file is None:
             raise ValueError("Attempting to initialize DocuscopeCSVDictionary without a rules_filename.")
         # See if the rule_file_name exists on-disk.
-        self.rules_path = os.path.join(
-            dictionaries_root,
-            self.label,
-            self.rules_file
-        )
-        if not os.path.exists(self.rules_path):
+        if not os.path.exists(self.rules_file):
             raise ValueError("Attempting to instantiate a DocuscopeCSVDictionary with a nonexistent rules_filename.")
+        self.rules_path = self.rules_file
         self.rules = {}
         self.tokens_in_rules = set()
         self.shortRules = {}
         self.words = dict()
+        self.lats = set()
 
     def _load_rules(self):
         if len(self.rules.keys()) > 0:
@@ -47,8 +44,9 @@ class DocuscopeCSVDictionary(BaseClass):
             # Remove trailing whitespace.
             row = [col.strip() for col in row]
             # Skip the first row if it's the column headings (case-insensitive).
-            if row_index == 0 and [str(col).lower() for col in row] == ["words", "rule"]:
+            if (row_index == 0 and [str(col).lower() for col in row] == ["words", "rule"]) or (row == []):
                 continue
+
             # Import this row using simple whitespace splitting.
             # The str.split() method without an argument splits on whitespace.
             words = row[0].split()
@@ -56,6 +54,7 @@ class DocuscopeCSVDictionary(BaseClass):
             if not self.case_sensitive:
                 words = tuple(str(word).lower() for word in words)
             rule = row[1]
+            self.lats.add(rule)
             rule_tuple = (rule, words)
             # Skip "empty" rules.
             if len(words) == 0:
@@ -79,3 +78,4 @@ class DocuscopeCSVDictionary(BaseClass):
                 self.rules[rule_root_key][rule_next_key].append(rule_tuple)
             # Stick this rule's words into the self.tokens_in_rule set.
             self.tokens_in_rules.update(words)
+        self.lats.add("!BLACKLISTED")

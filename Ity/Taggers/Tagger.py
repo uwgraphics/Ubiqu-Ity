@@ -7,6 +7,9 @@ from Ity.Tokenizers import Tokenizer
 
 
 class Tagger(BaseClass):
+
+
+    # TODO: Edit this giant comment to reflect new !UNRECOGNIZED and !UNTAGGED scheme
     """
     This is the Ity Tagger base class. It contains an abstract method, tag(),
     which accepts a list of tokens as input (as returned by an Ity
@@ -124,14 +127,14 @@ class Tagger(BaseClass):
     * The tag never has applied a valid rule in addition to one of the
       three "meta" rules.
     * The tag is only returned by self.tag() if the appropriate value of
-      self.return_[untagged, no_rules, excluded, included]_tags is True.
+      self.return_[untagged, unrecognized, excluded, included]_tags is True.
 
     When adding rules to the self.rules dict, check to see if the rule's
     full_name is already in self.rules. If so, update the existing rule dict's
     "num_tags" and "num_included_tokens" values (along with any other custom
     values added by a particular Tagger subclass).
 
-    Also, if self.return_[untagged, no_rules, excluded, included]_tags is
+    Also, if self.return_[untagged, unrecognized, excluded, included]_tags is
     False, rules returned by self.tag() should **also* omit rule entries
     for the corresponding "meta" rule.
 
@@ -147,7 +150,7 @@ class Tagger(BaseClass):
     purposes of reformatting or referencing the original text.
     """
     untagged_rule_name = "!UNTAGGED"
-    no_rules_rule_name = "!NORULES"
+    unrecognized_rule_name = "!UNRECOGNIZED"
     excluded_rule_name = "!EXCLUDED"
 
     # Note that the name and full_name values are intentionally invalid
@@ -179,12 +182,14 @@ class Tagger(BaseClass):
         excluded_token_types=(),
         case_sensitive=True,
         untagged_rule_name=None,
-        no_rules_rule_name=None,
+        unrecognized_rule_name=None,
         excluded_rule_name=None,
         return_untagged_tags=False,
-        return_no_rules_tags=False,
+        return_unrecognized_tags=False,
         return_excluded_tags=False,
-        return_included_tags=False
+        return_included_tags=False,
+        blacklist=[],
+        return_tag_maps=False,
     ):
         """
         The Tagger constructor. Note the defaults---the Tagger base class is
@@ -199,10 +204,10 @@ class Tagger(BaseClass):
                 excluded_token_types=excluded_token_types,
                 case_sensitive=case_sensitive,
                 untagged_rule_name=untagged_rule_name,
-                no_rules_rule_name=no_rules_rule_name,
+                unrecognized_rule_name=unrecognized_rule_name,
                 excluded_rule_name=excluded_rule_name,
                 return_untagged_tags=return_untagged_tags,
-                return_no_rules_tags=return_no_rules_tags,
+                return_unrecognized_tags=return_unrecognized_tags,
                 return_excluded_tags=return_excluded_tags,
                 return_included_tags=return_included_tags
             )
@@ -219,18 +224,18 @@ class Tagger(BaseClass):
         :param untagged_rule_name: The "meta" rule name to use for "untagged"
                                    tags, if they're being returned.
         :type untagged_rule_name: str
-        :param no_rules_rule_name: The "meta" rule name to use for "no rules"
+        :param unrecognized_rule_name: The "meta" rule name to use for "no rules"
                                    tags, if they're being returned.
-        :type no_rules_rule_name: str
+        :type unrecognized_rule_name: str
         :param excluded_rule_name: The "meta" rule name to use for "excluded"
                                    tags, if they're being returned.
         :type excluded_rule_name: str
         :param return_untagged_tags: Whether or not to return "untagged" tags
                                      and the "untagged" "meta" rule.
         :type return_untagged_tags: bool
-        :param return_no_rules_tags: Whether or not to return "no rules" tags
+        :param return_unrecognized_tags: Whether or not to return "no rules" tags
                                      and the "no rules" "meta" rule.
-        :type return_no_rules_tags: bool
+        :type return_unrecognized_tags: bool
         :param return_excluded_tags: Whether or not to return "excluded" tags
                                      and the "excluded" "meta" rule.
         :type return_excluded_tags: bool
@@ -255,7 +260,7 @@ class Tagger(BaseClass):
         self.tags = []
         # Should we return tags for which only a particular "meta" rule applies?
         self.return_untagged_tags = return_untagged_tags
-        self.return_no_rules_tags = return_no_rules_tags
+        self.return_unrecognized_tags = return_unrecognized_tags
         self.return_excluded_tags = return_excluded_tags
         self.return_included_tags = return_included_tags
         # Support for giving "meta" rules custom names.
@@ -265,10 +270,10 @@ class Tagger(BaseClass):
             self.untagged_rule_name = untagged_rule_name
         else:
             self.untagged_rule_name = Tagger.untagged_rule_name
-        if no_rules_rule_name is not None:
-            self.no_rules_rule_name = no_rules_rule_name
+        if unrecognized_rule_name is not None:
+            self.unrecognized_rule_name = unrecognized_rule_name
         else:
-            self.no_rules_rule_name = Tagger.no_rules_rule_name
+            self.unrecognized_rule_name = Tagger.unrecognized_rule_name
         if excluded_rule_name is not None:
             self.excluded_rule_name = excluded_rule_name
         else:
@@ -295,7 +300,7 @@ class Tagger(BaseClass):
         """
         return [
             self.untagged_rule_name,
-            self.no_rules_rule_name,
+            self.unrecognized_rule_name,
             self.excluded_rule_name
         ]
 
@@ -312,8 +317,8 @@ class Tagger(BaseClass):
         excluded_meta_rule_names = []
         if not self.return_untagged_tags:
             excluded_meta_rule_names.append(self.untagged_rule_name)
-        if not self.return_no_rules_tags:
-            excluded_meta_rule_names.append(self.no_rules_rule_name)
+        if not self.return_unrecognized_tags:
+            excluded_meta_rule_names.append(self.unrecognized_rule_name)
         if not self.return_excluded_tags:
             excluded_meta_rule_names.append(self.excluded_rule_name)
         return excluded_meta_rule_names
@@ -362,7 +367,6 @@ class Tagger(BaseClass):
             type(rule["name"]) is str and
             "full_name" in rule and
             type(rule["full_name"]) is str and
-            rule["full_name"].startswith(self.full_label) and
             "num_tags" in rule and
             type(rule["num_tags"]) is int and
             rule["num_tags"] >= 0 and

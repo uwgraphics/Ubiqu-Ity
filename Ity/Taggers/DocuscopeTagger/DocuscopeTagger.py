@@ -9,6 +9,7 @@ from DocuscopeCSVDictionary import DocuscopeCSVDictionary
 from Ity.Tokenizers import Tokenizer
 from Ity.Taggers import Tagger
 
+import time
 
 class DocuscopeTagger(Tagger):
     """
@@ -52,27 +53,36 @@ class DocuscopeTagger(Tagger):
                     Tokenizer.TYPES["NEWLINE"]
             ),
             untagged_rule_name=None,
-            no_rules_rule_name=None,
+            unrecognized_rule_name=None,
             excluded_rule_name=None,
             return_untagged_tags=False,
-            return_no_rules_tags=False,
+            return_unrecognized_tags=False,
             return_excluded_tags=False,
             return_included_tags=False,
             allow_overlapping_tags=False,
-            dictionary_path=None
+            dictionary_path=None,
+            blacklist=[],
+            return_tag_maps=False,
     ):
         super(DocuscopeTagger, self).__init__(
             debug=debug,
             label=label,
             excluded_token_types=excluded_token_types,
             untagged_rule_name=untagged_rule_name,
-            no_rules_rule_name=no_rules_rule_name,
+            unrecognized_rule_name=unrecognized_rule_name,
             excluded_rule_name=excluded_rule_name,
             return_untagged_tags=return_untagged_tags,
-            return_no_rules_tags=return_no_rules_tags,
+            return_unrecognized_tags=return_unrecognized_tags,
             return_excluded_tags=return_excluded_tags,
-            return_included_tags=return_included_tags
+            return_included_tags=return_included_tags,
+            blacklist=blacklist,
+            return_tag_maps=return_tag_maps
         )
+
+        # Set blacklist
+        self.blacklist = blacklist
+
+        self.return_tag_maps = return_tag_maps
         # This is a weird setting
         self.allow_overlapping_tags = allow_overlapping_tags
         # Allow DocuscopeTagger to be initialized with a different path to the Docuscope dictionary.
@@ -84,11 +94,12 @@ class DocuscopeTagger(Tagger):
                 self._label += "." + "return_excluded_tags"
             if self.allow_overlapping_tags:
                 self._label += "." + "allow_overlapping_tags"
-        elif os.path.exists(os.path.join(Ity.dictionaries_root, 'Docuscope', dictionary_path)):
+        elif dictionary_path is not None and os.path.exists(os.path.join(Ity.dictionaries_root, 'Docuscope', dictionary_path)):
             self.dictionary_path = os.path.join(Ity.dictionaries_root, 'Docuscope', dictionary_path)
             self._label += '.' + dictionary_path
         # If the given dictionary path is invalid, use the following default value.
         else:
+            # lf.write("swapped to default at 102"+ '\n')
             self.dictionary_path = os.path.join(Ity.dictionaries_root, "Docuscope/default")
             # Swizzle ".default" into this instance's label.
             self._label += ".default"
@@ -101,7 +112,7 @@ class DocuscopeTagger(Tagger):
             # Load the Dictionary with a TopicModelDictionary.
             self._ds_dict = DocuscopeCSVDictionary(rules_filename=self.dictionary_path)
             self._ds_dict._load_rules()
-
+        # lf.close()
     def _get_ds_words_for_token(self, token, case_sensitive=False):
         # Get all the str representations of this token.
         token_strs = token[Tokenizer.INDEXES["STRS"]]
@@ -119,6 +130,8 @@ class DocuscopeTagger(Tagger):
     def _get_ds_words_for_token_index(self, token_index, case_sensitive=False):
         try:
             token = self.tokens[token_index]
+            if token[0][0] in self.blacklist:
+                return []
             return self._get_ds_words_for_token(token, case_sensitive)
         except IndexError:
             return []
@@ -160,12 +173,12 @@ class DocuscopeTagger(Tagger):
         if best_ds_rule is not None and best_ds_rule_len > 0:
             # Update the rule structure.
             rule["name"] = best_ds_lat
-            rule["full_name"] = ".".join([self.full_label, rule["name"]])
+            rule["full_name"] = best_ds_lat
             # Update the tag structure.
             last_token_index = self._get_nth_next_included_token_index(n=best_ds_rule_len - 1)
             tag.update(
                 rules=[
-                    (rule["full_name"], best_ds_rule)
+                    (rule["name"], best_ds_rule)
                 ],
                 index_start=self.token_index,
                 index_end=last_token_index,
@@ -215,7 +228,9 @@ class DocuscopeTagger(Tagger):
         )
         # For words and punctuation...
         matching_ds_word = None
-        if token[Tokenizer.INDEXES["TYPE"]] not in self.excluded_token_types:
+        if token[0][0] in self.blacklist:
+                rule["name"] = "!BLACKLISTED"
+        elif token[Tokenizer.INDEXES["TYPE"]] not in self.excluded_token_types:
             # Try to find a short rule for one of this token's ds_words.
             for ds_word in token_ds_words:
                 try:
@@ -225,18 +240,18 @@ class DocuscopeTagger(Tagger):
                     break
                 except KeyError:
                     continue
-            # Handle "no rule" included tokens (words and punctuation that
+            # Handle untagged tokens (words and punctuation that
             # exist in the Docuscope dictionary's words dict but do not have
             # an applicable rule).
             if rule["name"] is None:
                 for ds_word in token_ds_words:
                     if ds_word in self._ds_dict.words:
-                        rule["name"] = self.no_rules_rule_name
+                        rule["name"] = self.untagged_rule_name
                         break
             # Still don't have a rule?
-            # Handle "untagged" tokens---tokens that do not exist in the dictionary.
+            # Handle !UNRECOGNIZED tokens---tokens that do not exist in the dictionary.
             if rule["name"] is None:
-                rule["name"] = self.untagged_rule_name
+                rule["name"] = self.unrecognized_rule_name
         # For excluded token types...uh, they're excluded.
         else:
             rule["name"] = self.excluded_rule_name
@@ -244,7 +259,7 @@ class DocuscopeTagger(Tagger):
         # Update the rule's full_name value and append a rule tuple to the
         # tag's "rules" list.
         if "name" in rule and type(rule["name"]) is str:
-            rule["full_name"] = ".".join([self.full_label, rule["name"]])
+            rule["full_name"] = rule["name"]
             rule_tuple = (rule["full_name"], matching_ds_word)
             tag["rules"].append(rule_tuple)
         # self._get_tag() will validate the returned rule and tag.
@@ -273,13 +288,14 @@ class DocuscopeTagger(Tagger):
             if rule["full_name"] not in self.rules:
                 rule["num_tags"] = 1
                 rule["num_included_tokens"] = tag["num_included_tokens"]
-                self.rules[rule["full_name"]] = rule
+                self.rules[rule["name"]] = rule
             # We've seen this rule already, but update its num_tags count.
             else:
-                self.rules[rule["full_name"]]["num_tags"] += 1
-                self.rules[rule["full_name"]]["num_included_tokens"] += tag["num_included_tokens"]
+                self.rules[rule["name"]]["num_tags"] += 1
+                self.rules[rule["name"]]["num_included_tokens"] += tag["num_included_tokens"]
             # Append the tag to self.tags.
-            self.tags.append(tag)
+            if self.return_tag_maps:
+                self.tags.append(tag)
             # Debug: print the tokens that have been tagged.
             if self.debug:
                 tag_token_strs = []
@@ -317,4 +333,7 @@ class DocuscopeTagger(Tagger):
         self.rules = {}
         self.tags = []
         # Return the goods.
-        return rules, tags
+        if self.return_tag_maps:
+            return rules, tags
+        else:
+            return rules

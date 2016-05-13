@@ -24,27 +24,27 @@ from Ity.TaskSupport import *
 # Celery
 from celery import Celery
 from celery.utils.log import get_task_logger
-celery = Celery(__name__)
-celery.config_from_object("celery_config")
+celery_app = Celery(__name__)
+celery_app.config_from_object("celery_config")
 logger = get_task_logger(__name__)
 
 
 # Sentry / Raven
-if "SENTRY_DSN" in celery.conf:
+if "SENTRY_DSN" in celery_app.conf:
     from raven import Client
     from raven.contrib.celery import register_signal
     client = Client(
-        dsn=celery.conf["SENTRY_DSN"]
+        dsn=celery_app.conf["SENTRY_DSN"]
     )
     register_signal(client)
 
 
-@celery.task
+@celery_app.task
 def upload_corpus(data):
     pass
 
 
-@celery.task
+@celery_app.task
 def process_corpus(
     tokenizer="RegexTokenizer",
     taggers=("DocuscopeTagger",),
@@ -122,7 +122,7 @@ def process_corpus(
     return corpus, results, corpus_results
 
 
-@celery.task
+@celery_app.task
 def process_text(
     path,
     name=None,
@@ -214,14 +214,14 @@ def process_text(
         text_instance.format_data = {}
     return text_instance
 
-@celery.task
+@celery_app.task
 def get_text_str(text_path):
     with codecs.open(text_path, "r", encoding="utf-8") as text_file:
         text = text_file.read()
     return text
 
 
-@celery.task
+@celery_app.task
 def tokenize_text(text, tokenizer="RegexTokenizer"):
     """
     Tokenizes a text string.
@@ -234,7 +234,7 @@ def tokenize_text(text, tokenizer="RegexTokenizer"):
     return tokens
 
 
-@celery.task
+@celery_app.task
 def tag_tokens(tokens, tagger="DocuscopeTagger"):
     """
     Tags a tuple of tokens.
@@ -247,7 +247,7 @@ def tag_tokens(tokens, tagger="DocuscopeTagger"):
     return tags, tag_maps
 
 
-@celery.task
+@celery_app.task
 def format_text(
     tags=None,
     rules=None,
@@ -290,7 +290,7 @@ def format_text(
     return format_output
 
 
-@celery.task
+@celery_app.task
 def get_output_dir(text=None, corpus=None):
     #TODO: Remove this. Blargh.
     output_dir = Ity.output_root
@@ -299,7 +299,7 @@ def get_output_dir(text=None, corpus=None):
     return output_dir
 
 
-@celery.task
+@celery_app.task
 def initialize_modules(modules):
     initialized_modules = {}
     for module_index, module_kwargs in enumerate(modules):
