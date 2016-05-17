@@ -1,0 +1,72 @@
+{% extends "base_layout.html" %}
+
+{% block head %}
+<style type="text/css">
+    body {
+{#        background: orange;#}
+        padding: 10px 0;
+    }
+    .box {
+        padding: 0 20px 20px; background: #fff;
+    }
+    #top_row {
+{#        min-height: 408px;#}
+        margin-bottom: 10px;
+    }
+    #top_row > div {
+        height: 100%;
+    }
+    #ubiqu_upload_progress {
+        width: 35%;
+{#        float: left;#}
+        margin: 12px auto;
+    }
+    #output_content {
+        height: 252px;
+        overflow: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row-fluid">
+    <div id="content" class="offset2 span8 with_shadow box" style="margin-bottom: 10px">
+        <div class="hero-unit" style="padding: 20px 0 0; margin-bottom: 0; text-align: center;">
+            <h1>{{ app_name }} 1.1</h1>
+            <small>A Visualizing English Print application from the University of Wisconsin&ndash;Madison</small>
+        </div>
+        <hr style="margin-bottom: 0">
+        <h2 id="whatis">What is Ubiqu+Ity?</h2>
+			<p>Ubiqu+Ity is a front-end application that provides access to DocuScope dictionaries. <a href="http://www.cmu.edu/hss/english/research/docuscope.html">DocuScope</a> is a suite of corpus visualization tools for rhetorical analysis, developed by <a href="http://www.cmu.edu/hss/english/people/faculty/bios/david-kaufer.html">David Kaufer</a> and <a href="http://www.cmu.edu/hss/english/people/faculty/bios/suguru-ishizaki.html">Suguru Ishizaki</a> at Carnegie Mellon University.  DocuScope’s development team doesn’t have the resources to make DocuScope available for public use. To support its use beyond Carnegie Mellon,  the Visualizing English Print project received funds from the Andrew Mellon Foundation to build a front-end tool to DocuScope as one of its project goals. Ubiqu+Ity allows researchers to utilize the robust dictionaries from DocuScope’s environment, which categorize over 40 million linguistic patterns into approximately 100 classes of rhetorical effects.</p>
+		<h2 id="ubiqpipeline">How does Ubiqu+Ity work?</h2>
+			<p>Ubiqu+Ity takes in plain text files or a zipped set of plain text files. File by file, Ubiqu+Ity reads in the plain text and breaks up input via the tokenizer. After the tokenizer generates a list of tokens, the tokens are assessed and tagged by a tagger class. The class utilizes a specified DocuScope dictionary version, or a dictionary provided by the user. Dictionaries include rules for words and the semantic tags they are associated with. These tags belong to groups of rhetorical features called "language action types," or LATs. Ubiqu+Ity then sorts tags into lists of tag instances according to the LATs. From there, Ubiqu+Ity generates a spreadsheet of statistics about those tags. Each document has its own associated proportion of tags. Additionally, text is converted into an HTML document that assigns colors to tags and maps the colors onto corresponding words within the text.</p>
+		<h2 id='features'>Features</h2>
+			<h3>Tokenizer</h3>
+				<p>This step determines what content from input text files is to be tagged. Ubiqu+Ity employs a regular expression tokenizer that assesses text files line by line, identifying three classes of tokens: words, whitespace, and punctuation. The algorithm groups like-characters together until it encounters a character from another class, with whitespace and punctuation marking the boundaries of words.</p>
+				<ul><li>Numbers belong to the same class as letters. The tokenizer treats "7AM" as one word/token. "7 AM", on the other hand, is recognized as two word tokens, "7" and "AM".</li>
+				<li>Sequences of punctuation are treated as a single punctuation token (e.g., --, ?!, .-).</li>
+				<li>Symbols are hard-coded as punctuation (eg., &, *, #, %, ^, etc.).</li>
+				<li>To accommodate hyphenated words, the algorithm treats hyphens as an exception to the punctuation token rule when a single hyphen occurs between two characters (letter and/or number). As a result, the hyphen is treated as part of the word.</li>
+				<li>To accommodate internal apostrophes, the algorithm, similarly to single hyphens, counts apostrophes as part of a word when they fall between who characters (letter and/or number). If an apostrophe occurs at the beginning or end of a word, it will not be counted as part of that word. For example, the algorithm treats "T'is" as a word token, while "'Tis" is broken into a punctuation token (') and a word token (Tis).</li></ul>
+			<h3>Chunking</h3>
+				<p>The chunking feature allows users to track changes of DocuScope tags over time within a document, rather than accounting for the tag’s behavior for the whole document. Chunking breaks texts into sections according to number of words. By default, chunk length is set to 2,000 words, though Ubiqu+Ity allows the user to set chunk length to their specifications. In addition to chunk length, users can determine whether or not they want chunked portions to overlap with the chunk offset variable. By default the feature creates disjointed chunks with no overlap between chunked sections. To ensure sound statistical analysis, if the final chunk of a text is smaller than chunk length, that chunk is appended to the previous chunk.</p>
+			<h3>Blacklisting</h3>
+				<p>Ubiqu+Ity allows users to blacklist words, that is, prevent Ubiqu+Ity from semantically tagging specified input. This feature proves useful when corpora contains diction so nuanced that Ubiqu+Ity may not properly tag it. For example, <em>bear</em> functions as a noun and verb with multiple denotations. We bear arms, we bear children, and we bear left. As a verb, it signifies to carry objects, to carry oneself with a certain air, to give birth to, to proceed in a direction, to support, and to endure. As a noun, it signifies the animal. Yet there are nuanced connotations for even the noun, if we think of the stock market (bear markets) and stuffed animals (teddy bear). It is difficult to account for the richness of <em>bear</em>’s semantic complexity, lowering the probability of assigning it the correct semantic tag. Blacklisting a word such as <em>bear</em>, when prevalent in a corpus, stops Ubiqu+Ity from tagging semantically-fraught input. Words entered to be blacklisted are consequently tagged as blacklisted. Ubiqu+Ity supports the blacklisting of single words, not phrases.</p>
+			<h3>About The Project</h3>
+				<p>Ubiqu+Ity was developed at the <a href="http://www.wisc.edu/">University of Wisconsin-Madison</a> as part of the <a href="http://vep.cs.wisc.edu/">Visualizing English Print</a> (VEP) Project.</p>
+				<p>The application was authored by Joe Kohlmann, Eric Alexander, and Erin Winters, under the advising of Professor Michael Gleicher.</p>
+				<p>This work was supported by a grant from the <a href="http://www.mellon.org/">Andrew W. Mellon Foundation</a>. The code for Ubiqu+Ity is open-source under the BSD license.</p>
+				<br>
+        <small><a href="mailto:ealexand@cs.wisc.edu?subject=Feedback%20for%Ubiqu+Ity">Email Feedback About Ubiqu+Ity</a></small>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div id="faq" class="offset2 span8 with_shadow box" style="padding-top: 10px">
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for("static", filename="js/Ubiqu.js") }}"></script>
+{% endblock %}

@@ -1,0 +1,13 @@
+word, rule
+murder, death
+death, death
+dead, death
+kill, death
+killed, death
+died, death
+the, article
+a, article
+an, article
+marriage, HappyEnding
+happy, HappyEnding
+happily, HappyEnding

@@ -1,0 +1,356 @@
+{% extends "base_layout.html" %}
+
+{% block head %}
+<style type="text/css">
+    body {
+{#        background: orange;#}
+        padding: 10px 0;
+    }
+    .box {
+        padding: 0 20px 20px; background: #fff;
+    }
+    #top_row {
+{#        min-height: 408px;#}
+        margin-bottom: 10px;
+    }
+    #top_row > div {
+        height: 100%;
+    }
+    #ubiqu_upload_progress {
+        width: 35%;
+{#        float: left;#}
+        margin: 12px auto;
+    }
+    #output_content {
+        height: 252px;
+        overflow: auto;
+    }
+    #chunk_params {
+        display:none;
+    }
+    #blacklist_params {
+        display:none;
+    }
+    #blacklist_words{
+         height: 90px;
+         width: 450px;
+        word-wrap: break-word;
+
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row-fluid">
+    <div id="content" class="offset2 span8 with_shadow box" style="margin-bottom: 10px">
+        <div class="hero-unit" style="padding: 20px 0 0; margin-bottom: 0; text-align: center;">
+            <h1>{{ app_name }} 1.1</h1>
+            <small>A Visualizing English Print application from the University of Wisconsin&ndash;Madison</small>
+            <p>{{ app_name }} generates <strong>statistics</strong><sup><a onclick='$("#faq6").collapse("show");' href="#faq6">6</a></sup> and <strong>web-based tagged text views</strong><sup><a onclick='$("#faq7").collapse("show");' href="#faq7">7</a></sup><br>for your <strong>text/s</strong><sup><a onclick='$("#faq1").collapse("show");' href="#faq1">1</a></sup>, using <strong>the DocuScope dictionary</strong><sup><a onclick='$("#faq2").collapse("show");' href="#faq2">2</a></sup> or <strong>your own rules</strong><sup><a onclick='$("#faq3").collapse("show");' href="#faq3">3</a></sup>. </p>
+        </div>
+        <hr style="margin-bottom: 0">
+        <h2>Upload Files</h2>
+        <form id="ubiqu_upload_form" enctype="multipart/form-data" method="POST" action="{{ url_for('upload') }}">
+            <label for="Text">Text File/s (or ZIP Archive/s)<sup><a onclick='$("#faq1").collapse("show");' href="#faq1">1</a></sup></label>
+            <input type="file" multiple name="Text">
+            <br>
+            <br>
+            <label for="RulesChoice">Rules type</label>
+            <div class="radio">
+              <label onclick='$("#SimpleRuleInput").hide(); $("#docuscope_dictionary").show();'>
+                <input type="radio" name="RulesChoice" id="rulesChoice1" value="option1" checked>
+                Use DocuScope dictionary<sup><a onclick='$("#faq2").collapse("show");' href="#faq2">2</a></sup>
+              </label>
+              <select id="docuscope_dictionary" name="docuscope_dictionary">
+                  <option value="v3.91_2015.09.06">Version 3.91 (9/6/2015)</option>
+                  <option value="v3.91_2015.06.03">Version 3.91 (6/3/2015)</option>
+                  <option value="v3.85_2014.12.19">Version 3.85 (6/26/2014)</option>
+                  <option value="v3.83_2013.12.11">Version 3.83 (12/11/2013)</option>
+                  <option value="v3.82_2013.12.11">Version 3.82 (12/11/2013)</option>
+                  <option value="v3.80_2013.10.24">Version 3.80 (10/24/2013)</option>
+                  <option value="v3.70_2013.09.11">Version 3.70 (9/11/2013)</option>
+                  <option value="v3.60_2013.08.03">Version 3.60 (8/3/2013)</option>
+                  <option value="v3.50_2013.07.05">Version 3.50 (7/5/2013)</option>
+                  <option value="v3.30_2012.09.16">Version 3.30 (9/16/2012)</option>
+                  <option value="v3.21_2012.06.26">Version 3.21 (6/26/2012)</option>
+              </select>
+            </div>
+            <div class="radio">
+              <label onclick='$("#SimpleRuleInput").show(); $("#docuscope_dictionary").hide();'>
+                <input type="radio" name="RulesChoice" id="rulesChoice2" value="option2">
+                Use own rules file (check the FAQ for how to format the CSV).<sup><a onclick='$("#faq3").collapse("show");' href="#faq3">3</a></sup>
+              </label>
+              <input type="file" id="SimpleRuleInput" name="SimpleRule" hidden>
+            </div>
+            <div class="checkbox">
+                <input type="checkbox" value="chunk_text" id="chunk_text" name="chunk_text">Break texts into fixed-size chunks<sup><a onclick='$("#faq4").collapse("show");' href="#faq4">4</a></sup></input>
+            </div>
+            <div id="chunk_params">
+                <div class="number">
+                    <input type="number" id="chunk_length" name="chunk_length" value="chunk_length"  min="500" onKeyDown="if(this.value.length==8)
+                     this.value = this.value.slice(0, - 1);"> Chunk length (in tokens)</input>
+                </div>
+                <div class="number">
+                    <input type="number" id="chunk_offset" name="chunk_offset" value="chunk_offset" min="250" onKeyDown="if(this.value.length==8)
+                     this.value = this.value.slice(0, - 1);"> Distance between consecutive chunks (in tokens)</input>
+                </div>
+            </div>
+            <div class="checkbox">
+                <input type="checkbox" value="enable_blacklist" id="enable_blacklist" name="enable_blacklist">Enable blacklist<sup><a onclick='$("#faq5").collapse("show");' href="#faq5">5</a></sup></input>
+            </div>
+            <div id="blacklist_params">
+                <div class="text">
+                    <textarea  id="blacklist_words" name="blacklist_words" name="blacklist_words" placeholder="Please enter single words (not phrases) separated by spaces."></textarea>
+                </div>
+
+            </div>
+            <div class="checkbox">
+                <input type="checkbox" name="generate_text_htmls" value="generate_text_htmls" checked="True">Generate HTML files for individual texts</input>
+            </div>
+            <div class="checkbox">
+                <input type="checkbox" name="generate_ngram_csv" value="generate_ngram_csv">Generate ngram CSV</input>
+            </div>
+
+            <!--<label for="SimpleRule">Rules File<sup><a onclick='$("#faq3").collapse("show");' href="#faq3">3</a></sup> <em>(No rules? We'll use <strong>the Docuscope dictionary</strong><sup><a onclick='$("#faq2").collapse("show");' href="#faq2">2</a></sup>, then.)</em></label>
+            <input type="file" name="SimpleRule">-->
+            <br>
+            <label for="email_address">Your Email Address <em>(You will receive an email when your documents are finished.)</em></label>
+            <input type="email" name="email_address" required>
+            <br>
+            <div id="privacy" class="alert alert-block">
+                <!--<strong>Privacy Note</strong>: Please do not upload any files you do not want to be visible to others.<br><br>Access to the files generated from your uploads is <em>obfuscated</em>, yes, but it is also, technically, <strong>public</strong>. You should care about this.<br><br>Also, we are currently retaining uploaded files for debugging and testing purposes.</strong>-->
+                Use of this website is subject to the <a href="{{ url_for('static', filename='TermsOfUse.pdf') }}">terms of use</a> and <a href="{{ url_for('static', filename='PrivacyPolicy.pdf') }}">privacy policy</a>.
+            </div>
+            <div class="buttons">
+                <input id="ubiqu_upload_reset" type="reset" class="btn btn-large" style="float: left" value="Clear">
+                <input id="ubiqu_upload_submit" type="submit" class="btn btn-warning btn-large" style="float: right" value="Upload">
+                <div id="ubiqu_upload_progress" class="progress progress-warning"><div class="bar" style="width: 0%;"></div></div>
+            </div>
+        </form>
+        <br>
+        <small><a href="mailto:ealexand@cs.wisc.edu?subject=Feedback%20for%Ubiqu+Ity">Email Feedback About Ubiqu+Ity</a></small>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div id="faq" class="offset2 span8 with_shadow box" style="padding-top: 10px">
+        <h2>Ubiqu+Ity FAQ</h2>
+        <div class="accordion" id="faq-accordion" style="margin-bottom: 0">
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq1">
+                        1. What text format/s can I upload?
+                    </a>
+                </div>
+                <div id="faq1" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <ul>
+                            <li><strong>A single plain-text file</strong> (though it seems like that would be boring)</li>
+                            <li><strong>A ZIP archive</strong> containing multiple plain-text files (now we're talking)</li>
+                            <li><strong>Multiple plain-text files</strong> <em>and/or</em> <strong>multiple ZIP archives</strong> (with HTML5 multi-file uploading)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq2">
+                        2. What is the DocuScope dictionary?
+                    </a>
+                </div>
+                <div id="faq2" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <p>
+                            DocuScope was created by <a href="http://www.cmu.edu/cas/people/kaufer_david.html">David Kaufer</a> and <a href="http://www.cmu.edu/cas/people/ishizaki_suguru.html">Suguru Ishizaki</a> in the Department of English at Carnegie Mellon University (emphasis ours):
+                        </p>
+                        <blockquote>DocuScope is a text analysis environment with a suite of interactive visualization tools for corpus-based rhetorical analysis. [&hellip;] <strong>David created what we call the generic (default) dictionary, consisting of over 40 million linguistic patterns of English classified into over 100 categories of rhetorical effects.</strong> Suguru designed and implemented the analysis and visualization software, which can annotate a corpus of text against any dictionary of regular strings that are classified into a hierarchy of rhetorical effects.
+                        </blockquote>
+                        <p>You can learn more about DocuScope, David, and Suguru here:</p>
+                            <ul><li><a href="http://www.cmu.edu/hss/english/research/docuscope.html">DocuScope: Computer-aided Rhetorical Analysis - Carnegie Mellon University</a></li></ul>
+                        <p>
+                            The investigators and researchers of the <!--<a href="http://bridge.library.wisc.edu/Projects_Portrait_English_Lit.html">--><a href="http://vep.cs.wisc.edu">Visualizing English Print project</a> at the University of Wisconsin&ndash;Madison have partnered with David and Suguru to utilize DocuScope's dictionary of rules in our research and our tools, such as this one. At the moment, we have two versions of the dictionary available (3.83 and 3.21). We will keep our available dictionaries updated as further versions are released.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq3">
+                        3. How do I specify my own rules?
+                    </a>
+                </div>
+                <div id="faq3" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <p>
+                            If you don't want to use the DocuScope dictionaries, Ubiqu+Ity allows you to create your own simple rules. Rules are declared in a CSV file that looks like this:
+                        </p>
+                        <ul>
+                            <li>Column 1: <strong>Whitespace-Separated Words and Punctuation</strong></li>
+                            <li>Column 2: <strong>The Rule's Name</strong></li>
+                        </ul>
+                        <p>Ubiqu+Ity will look for exact instances of the rules that are specified. Column headings (i.e. <code>Words, Rule</code> on the first line of the CSV file) are <em>optional</em>, but recommended.</p>
+                        <p>Here's an example:</p>
+                        <pre>
+Words, Rule
+I have a question, GenericQuestionQuery
+Have you had, PresentPerfectQuery
+Stand ho, ExclamatoryStatement</pre>
+                        <p>
+                            In the future, we will allow users to create more complex, hierarchical rule structures.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq4">
+                        4. How does the chunk feature work?
+                    </a>
+                </div>
+                <div id="faq4" class="accordion-body collapse">
+                    <div class="accordion-inner">
+					<p>The chunk feature generates allows for the comparison of tag frequencies within a text. It divides a text into chunks of a user-specified number of tokens and gives each chunk its own row in the final spreadsheet. <br><br> The "chunk distance" setting allows you to control how much the chunks overlap. Picking a distance equal to chunk length will give you completely disjoint pieces, and picking a distance half the chunk length with give you chunks with 50% overlap.</p>
+					</div>
+				</div>
+			</div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq5">
+                        5. How does the blacklist feature work?
+                    </a>
+                </div>
+                <div id="faq5" class="accordion-body collapse">
+                    <div class="accordion-inner">
+					<p>This is designed for instances where Docuscope's rules may not give the desired results for specific words in a corpus. For example, words like "bear" can have many distinct meanings within a single text that can't necessarily be captured through Docuscope. Blacklisting stops Ubiqu.Ity from tagging semantically ambiguous input. <br> <br> If a word within a rule is <i>blacklisted</i>, then that word is tagged as <b>"!BLACKLISTED"</b> and any longer rules that contain that word are broken down into smaller rules. Note that blacklisting only works on individual words, not phrases. </p>
+					</div>
+				</div>
+			</div>
+
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq6">
+                        6. What does the CSV output look like, and how can I read it?
+                    </a>
+                </div>
+                <div id="faq6" class="accordion-body collapse">
+                    <div class="accordion-inner">
+							<p>
+							<table cellpadding=3 cellspacing=1 width=90%>
+								<thead><tr><th align=left>COLUMNS</th><th align=left>DATA EXPLANATION</th></tr></thead>
+								<tbody>
+									<tr><td>text_name</td> <td>file names of uploaded text files</td></tr>
+									<tr><td>text_key</td> <td>file name, transformed into lowercase characters without file extension</td></tr>
+									<tr><td>html_name</td> <td>file name of HTML viewer file for respective text file</td></tr>
+									<tr><td>chunk_index</td> <td>an integer that specifies the text chunk number for chunked files; starts at 0 and increases sequentially</td></tr>
+									<tr><td>!NORULES</td> <td>percentage of recognized text input not assigned a rule within a DocuScope dictionary, like punctuation</td></tr>
+									<tr><td>!UNTAGGED</td> <td>percentage of text input not recognized by DocuScope dictionaries, therefore not assigned a tag</td></tr>
+									<tr><td>!BLACKLISTED</td> <td>percentage of text input that matches content set to blacklisted</td></tr>
+									<tr><td><# Word Tokens></td> <td>total number of word tokens in a text or text chunk</td></tr>
+									<tr><td><# Punctuation Tokens></td> <td>number of punctuation tokens in a text or text chunk</td></tr>
+									<tr><td><# Tokens></td> <td>total number of tokens (Word and Punctuation) in a text or text chunk</td></tr>
+								</tbody>
+							</table>
+							</p>
+                        <p>Here is a live sample of what normal output looks like this: <a href="{{ url_for('static', filename='Ubiqu+Ity_Shakespeare-Plays_Example_Output.csv') }}">Ubiqu+Ity_Shakespeare-Plays_Example_Output.csv</a></p>
+                        <p>While chunked output looks like this: <a href="{{ url_for('static', filename='Ubiqu+Ity_Shakespeare-Plays_Example_Output_Chunked.csv') }}">Ubiqu+Ity_Shakespeare-Plays_Example_Output_Chunked.csv</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq7">
+                        7. What does the HTML text viewer look like?
+                    </a>
+                </div>
+                <div id="faq7" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <p>Here is an example HTML text viewer of Shakespeare's King Henry IV Part I, tagged with the DocuScope dictionary: <a href="{{ url_for('static', filename='Ubiqu+Ity_1_KING_HENRY_IV_Docuscope_Example_Output.html') }}">Ubiqu+Ity_1_KING_HENRY_IV_Docuscope_Example_Output.html</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq8">
+                        8. Can I specify my own colors in the HTML text viewer?
+                    </a>
+                </div>
+                <div id="faq8" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <p>Yes! The text viewer has a set of default colors that it uses when you toggle categories on and off, but specific colors can be specified through the URL.</p>
+                        <p>To specify your own colors, add a question mark (?) to the end of your URL, followed by pairs of the following form: <pre><em>category-name</em><strong>=</strong><em>color</em><strong>&</strong></pre>For instance, if we were to take our example tagged version of King Henry IV and make the Emotion_Negativity tags red and the Emotion_Positivity tags blue, we would add <pre>?Emotion_Negativity=red&Emotion_Positivity=blue&</pre> to the end of our URL, like so:<pre><a href="{{ url_for('static', filename='Ubiqu+Ity_1_KING_HENRY_IV_Docuscope_Example_Output.html') }}?Emotion_Negativity=red&Emotion_Positivity=blue&">Ubiqu+Ity_1_KING_HENRY_IV_Docuscope_Example_Output.html?Emotion_Negativity=red&Emotion_Positivity=blue&</a></pre></p>
+                        <p>You can also specify <a href="http://en.wikipedia.org/wiki/Web_colors">hex colors</a>:<pre><a href="{{ url_for('static', filename='Ubiqu+Ity_1_KING_HENRY_IV_Docuscope_Example_Output.html') }}?Emotion_Negativity=#FF7777&Emotion_Positivity=#7777FF&">Ubiqu+Ity_1_KING_HENRY_IV_Docuscope_Example_Output.html?Emotion_Negativity=#FF7777&Emotion_Positivity=#7777FF&</a></pre></p>
+                    </div>
+                </div>
+            </div>
+
+{#            <div class="accordion-group">#}
+{#                <div class="accordion-heading">#}
+{#                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq">#}
+{#                        8. Are any further versions of Ubiqu+Ity planned?#}
+{#                    </a>#}
+{#                </div>#}
+{#                <div id="faq8" class="accordion-body collapse">#}
+{#                    <div class="accordion-inner">#}
+{#                        <p>Yes. We will soon be releasing Ubiqu+Ity 1.5, which will sport these key features:</p>#}
+{#                        <ul>#}
+{#                            <li>Improved interface for coloring tags that will allow users to provide weightings for tags of interest.</li>#}
+{#                            <li>Interactive graphical overviews embedded within the HTML files to show rise and fall of categories and aid in easy navigation.</li>#}
+{#                            <li>Improved mechanisms for full-text search within documents/corpora.</li>#}
+{#                            <li>Extra metadata output, including n-gram counts across entire corpus.</li>#}
+{#                            <li>The ability to define more complex rule structures.</li>#}
+{#                        </ul>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq9">
+                        9. Is the source code for Ubiqu+Ity available?
+                    </a>
+                </div>
+                <div id="faq9" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <p>Yes. Ubiqu+Ity is available under the <a href="">BSD license</a>, and can be forked from <a href="https://github.com/uwgraphics/Ubiqu-Ity">GitHub</a>.</p>
+                        <p>Ubiqu+Ity makes use of a number of different services, including the <a href="http://www.celeryproject.org/">Celery</a> distributed task queue and the <a href="http://www.rabbitmq.com/">RabbitMQ</a> message broker and results store. If you are interested in setting up your own installation, feel free to <a href="mailto:ealexand@cs.wisc.edu?subject=Installing%Ubiqu+Ity">contact us</a>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq10">
+                        10. To whom should I email comments, ideas, and/or bug reports?
+                    </a>
+                </div>
+                <div id="faq10" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <p>Please send those right to us:</p>
+                        <ul><li><a href="mailto:ealexand@cs.wisc.edu?subject=Feedback%20for%Ubiqu+Ity">Email Feedback About Ubiqu+Ity</a></li></ul>
+                        <p>We are also logging any system errors that might come up.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#faq-accordion" href="#faq11">
+                        11. How many LATs (linguistic categories) does a specific version of DocuScope have?
+                    </a>
+                </div>
+                <div id="faq11" class="accordion-body collapse">
+                    <div class="accordion-inner">
+					<p><ul><li>Default: 137</li><li>v3.85: 170</li><li>v3.83: 137</li><li>v3.82: 137</li><li>v3.80: 137</li><li>v3.7: 131</li><li>v3.6: 123</li><li>v3.5: 121</li><li>v3.3: 116</li><li>v3.21: 115</li></ul></p>
+					</div>
+				</div>
+			</div>
+			<!-- Add more FAQs here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for("static", filename="js/Ubiqu.js") }}"></script>
+
+{% endblock %}
