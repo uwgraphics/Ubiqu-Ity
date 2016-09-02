@@ -1,6 +1,6 @@
 import argparse
 import os
-import tasks
+import ubiq_internal_tasks as tasks
 from Ity.Tokenizers import RegexTokenizer
 from collections import defaultdict
 import sys
@@ -42,9 +42,12 @@ def ngramCorpus(args):
         per_doc_path = os.path.join(args.output_dir, 'perDocNgrams')
         if not os.path.exists(per_doc_path):
             os.mkdir(per_doc_path)
+    c = 0
     for dirpath, subdirs, files in os.walk(corpus_path):
         for file in files:
             if '.txt' in file:
+                print(c)
+                c+=1
                 filepath = os.path.join(dirpath, file)
                 try:
                     #tokenize

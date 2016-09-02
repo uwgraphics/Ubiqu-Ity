@@ -1,4 +1,4 @@
-__author__ = 'wintere-admin'
+__author__ = 'wintere'
 
 import abc
 from Ity import BaseClass
@@ -8,6 +8,7 @@ import csv
 import codecs
 import os
 import pandas as pd
+
 
 def end_reason(token):
     if token[0].isalpha():
@@ -30,7 +31,7 @@ def transform(tokens, csv_path):
     c = 0
     for i in range(len(tokens)):
 
-        #token number, token, token start index, end reason
+        #token, tokenToMatch, end reason
         t = tokens[i][0][0]
         if (t not in string.whitespace) and (t[0] != '\n'):
             row = []
@@ -48,6 +49,7 @@ def transform(tokens, csv_path):
         awriter.writerow(['Token #', 'Token', 'Start Index', 'End Reason'])
         for row in rows:
             awriter.writerow(row)
+
 
 def transformToFrame(tokens):
     rows = []
@@ -91,6 +93,6 @@ def tagFrameMerge(frame, result):
                 pos_in_tag += 1
     tFrame = pd.DataFrame(tagFrame)
     tFrame.columns = ['start index', 'tag', 'position in tag']
-    mergedFrame = frame.merge(tFrame, how='inner', on='start index')
+    mergedFrame = frame.merge(tFrame, how='left', on='start index')
     del mergedFrame['start index']
     return mergedFrame

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import codecs
 from datetime import datetime
+import pandas as pd
 from time import time
 import json
 import socket
@@ -11,6 +12,7 @@ from werkzeug.datastructures import ImmutableDict
 from werkzeug.utils import secure_filename
 from collections import defaultdict
 import sys
+import shutil
 import unicodecsv as csv
 sys.path.append(os.path.join(
     os.path.dirname(os.path.basename(__file__)),
@@ -36,13 +38,10 @@ def tag_corpus(
         corpus_data_files,
         email = '',
         tags=ImmutableDict(Docuscope={"return_included_tags": True, "return_excluded_tags": False}),
-        formats=ImmutableDict(HTML=None),
-        batch_formats=ImmutableDict(CSV=None),
         create_zip_archive=False,
         ngram_count=0,
         ngram_pun=False,
         ngram_per_doc=False,
-        generate_text_htmls=True,
         chunk_text=False,
         chunk_length=None,
         chunk_offset=None,
@@ -61,8 +60,6 @@ def tag_corpus(
     tag_corpus_start = time()
     timing = []
 
-    if not generate_text_htmls:
-        formats=ImmutableDict()
     # Validate corpus_info.
     if "path" not in corpus_info or "name" not in corpus_info or "data" not in corpus_info:
         raise ValueError("Invalid corpus_info provided.")
@@ -129,8 +126,6 @@ def tag_corpus(
         "_",
         "-".join(tags.keys()),
         "_",
-        "-".join(formats.keys()),
-        "_",
         socket.gethostname(),
         "_",
         str(int(time()))
@@ -139,7 +134,6 @@ def tag_corpus(
 
     # Validate Taggers.
     tagger_instances = {}
-    formatter_instances = {}
     if len(tags) > 1:
         raise ValueError("Tagging texts with multiple taggers isn't supported yet.")
     for tag_name in tags.keys():
@@ -153,8 +147,6 @@ def tag_corpus(
     # Instantiate Taggers.
     start = time()
     for tag_name, tag_args in tags.items():
-        if tag_name in tagger_instances:
-            raise NotImplementedError("Tagging multiple times with the same tagger is not yet supported.")
         tagger_name = tag_name + "Tagger"
         tagger_module = getattr(__import__("Ity.Taggers", fromlist=tagger_name), tagger_name)
         # Add some additional instantiation arguments for specific taggers.
@@ -185,35 +177,13 @@ def tag_corpus(
                 blacklist=blacklist,
             )
         # Instantiate this Tagger.
-        # optimization: detailed tag data isn't required UNLESS we generate HTML files or tag-level rule statistics
-        if generate_text_htmls or rule_csv or token_csv:
+        # optimization: detailed tag data isn't required UNLESS we generate tag-level rule statistics
+        if rule_csv or token_csv:
             tagger_init_args.update(return_tag_maps=True)
 
         tagger_instance = tagger_module(**tagger_init_args)
         tagger_instances[tag_name] = tagger_instance
     timing.append(('Instantiate Taggers', time() - start))
-
-    # Validate formatters.
-    for format_name in formats.keys() + batch_formats.keys():
-        __import__("Ity.Formatters." + format_name + "Formatter")
-
-    # Instantiate Formatters.
-    start = time()
-    for format_name, format_args in formats.items():
-        if format_name in formatter_instances:
-            raise NotImplementedError("Formatting multiple times with the same formatter is not yet supported.")
-        formatter_name = format_name + "Formatter"
-        formatter_module = getattr(__import__("Ity.Formatters", fromlist=formatter_name), formatter_name)
-        # Add some additional instantiation arguments for specific formatters.
-        # TODO: Clean up Taggers' init() arguments.
-        if format_args is None:
-            formatter_init_args = {}
-        else:
-            formatter_init_args = format_args
-        # Instantiate this Formatter.
-        formatter_instance = formatter_module(**formatter_init_args)
-        formatter_instances[format_name] = formatter_instance
-    timing.append(('Instantiate Formatters', time() - start))
 
     # Get all the texts in this corpus...if there are any?
     if "Text" not in corpus_info["data"] or len(corpus_data_files["Text"]["saved"]) == 0:
@@ -268,7 +238,7 @@ def tag_corpus(
         try:
             tokens = tokenizeText(text_path, defect_count, chunk_length, chunk_offset, tokenizer)
         # skip texts that can't be tokenized
-        except NotImplementedError:
+        except IOError:
             bad_texts.append(text_path)
             continue
         if token_csv:
@@ -277,11 +247,18 @@ def tag_corpus(
         tokenization_time += (time() - start)
 
         start = time()
-        result = tagText(tagger_instance, tag_name, text_path, tokens, corpus_info, formatter_instances, chunk=chunk_text, rule_csv=rule_csv, html=generate_text_htmls, token_csv=token_csv)
+        result = tagText(tagger_instance, tag_name, text_path, tokens, corpus_info, chunk=chunk_text, rule_csv=rule_csv,token_csv=token_csv)
         if token_csv:
             tagged_frame = TokenTransform.tagFrameMerge(token_frame, result)
+            result["token_csv_name"] = result['text_key'] + '-ubiq-tokens' + '.csv'
             tokenCSVPath = getCSVPath(corpus_info, name, type='token_csv', docName=result['text_key'])
             tagged_frame.to_csv(tokenCSVPath, index=False, header=False, encoding='utf-8')
+        else:
+            if chunk_text:
+                for r in result:
+                    r["token_csv_name"] = ""
+            else:
+                result["token_csv_name"] = ""
         tagging_time += (time() - start)
 
         # iterate through tokens (or sub-lists of tokens) and calculate token level statistics (if necessary)
@@ -306,7 +283,7 @@ def tag_corpus(
         # write out primary csv
         if chunk_text:
             for text_dict in result:
-                row = result_to_gen_row(text_dict, header_keys)
+                row = result_to_gen_row(text_dict, header_keys,)
                 uwriter.writerow(row)
         else:
             row = result_to_gen_row(result, header_keys)
@@ -336,7 +313,6 @@ def tag_corpus(
 
     timing.append(('Total Tokenization', tokenization_time))
     timing.append(('Total Tagging', tagging_time))
-    text_tagging_time = time() - tag_start
     # write out corpus-wide rule CSV (if applicable)
     if rule_csv:
         ruleCSV(corpus_info, name, corpus_map)
@@ -357,6 +333,13 @@ def tag_corpus(
                 meta={'current': 100.0, 'total': 100.0}
             )
 
+    if token_csv:
+        TVpath = os.path.join(
+            corpus_info["output_path"],
+            corpus_info["provenance"],'TextViewer.html'
+        )
+        print(TVpath)
+        shutil.copyfile('TextViewer.html', TVpath)
     print 'tag_corpus finished. Total elapsed time: %.2f seconds.' % (time() - tag_corpus_start)
 
     return csv_path
@@ -374,7 +357,6 @@ def buildReadme(args, values, timing,version, blacklist=[], bad_texts=[]):
     readmeLines.append('email: %s' % values['email'])
     readmeLines.append('')
     readmeLines.append('PARAMS:')
-    readmeLines.append('generate_text_htmls: %s' % values['generate_text_htmls'])
     readmeLines.append('generate_rule_csv: %s' % values['rule_csv'])
     readmeLines.append('generate token csv representation: %s' % values['token_csv'])
     readmeLines.append('create_zip_archive: %s' % values['create_zip_archive'])
@@ -410,7 +392,7 @@ def buildReadme(args, values, timing,version, blacklist=[], bad_texts=[]):
         readmeLines.append('    %s' % name)
     readmeLines.append('')
     if bad_texts != []:
-        readmeLines.append('UNABLE TO DECODE THE FOLLOWING FILES:')
+        readmeLines.append('UNABLE TO READ THE FOLLOWING FILES:')
         for fp in bad_texts:
             readmeLines.append(os.path.basename(fp))
         readmeLines.append('')
@@ -436,9 +418,12 @@ def tokenizeText(text_path, tcp, chunk_length, chunk_offset, tokenizer):
             if text_file is not None:
                 text_file.close()
     if text_contents is None:
-        raise NotImplementedError("Could not find a valid encoding for input file %s" % text_path)
+        raise IOError("Could not find a valid encoding for input file %s" % text_path)
 
     # returns a list of tokens
+    if text_contents == '':
+        raise IOError("File %s is empty." % text_path)
+
     tokens = tokenizer.tokenize(text_contents)
 
     if tcp:
@@ -470,14 +455,13 @@ def tokenizeText(text_path, tcp, chunk_length, chunk_offset, tokenizer):
 
     return tokens
 
-#tagText(tagger_instance, tag_name, text_path, tokens, corpus_info, formatter_instances, chunk=chunk_text, rule_csv=rule_csv, html=generate_text_htmls, token_csv=token_csv)
-def tagText(tagger, tag_name, text_path, tokens, corpus_info, formatters, chunk=False, rule_csv=False, html=False, token_csv=False):
+def tagText(tagger, tag_name, text_path, tokens, corpus_info, chunk=False, rule_csv=False, token_csv=False):
     result = {}
     single_tag_maps = {}
     text_name = os.path.basename(text_path)
 
     if not chunk:
-        if rule_csv or html or token_csv:
+        if rule_csv or token_csv:
             single_tag_data, single_tag_maps = tagger.tag(tokens)
             if rule_csv:
                 result['rule_map'] = defaultdict(int)
@@ -507,23 +491,12 @@ def tagText(tagger, tag_name, text_path, tokens, corpus_info, formatters, chunk=
             num_word_tokens=w,
             num_tokens=t,
         )
-        if html:
-            format_outputs = _format_text_with_existing_instances(single_tag_maps, tokens, result, corpus_info, formatters)
-            result["format_outputs"] = format_outputs
-            try:
-                result["html_name"] = os.path.basename(format_outputs["HTML"]["app"])
-            except KeyError:
-                pass # This is for if there is no HTMLFormatter. Super cheap hack.
-
         return result
     else:
         output_dict_list = []
         i = 0
         for token_sub in tokens[0]:
-            if html:
-                single_tag_data, single_tag_maps = tagger.tag(token_sub)
-            else:
-                single_tag_data = tagger.tag(token_sub)
+            single_tag_data = tagger.tag(token_sub)
             w, p, t= 0,0,0
             for token in token_sub:
                 if token[RegexTokenizer.INDEXES["TYPE"]] == RegexTokenizer.TYPES["WORD"]:
@@ -543,184 +516,11 @@ def tagText(tagger, tag_name, text_path, tokens, corpus_info, formatters, chunk=
                 num_word_tokens=w,
                 num_tokens=t,
             )
-            if html:
-                format_outputs = _format_text_with_existing_instances(single_tag_maps, token_sub, output_dict, corpus_info, formatters, chunk='_'+str(i))
-                try:
-                    output_dict["html_name"] = os.path.basename(format_outputs["HTML"]["app"])
-                except KeyError:
-                    pass
             output_dict_list.append(output_dict)
             i += 1
         return output_dict_list
 
-def _format_text_with_existing_instances(tag_maps, tokens, output_dict, corpus_info, formatters, chunk=''):
-    format_outputs = {}
-    for format_name, formatter in formatters.items():
-        # Format with this formatter.
-        format_output = formatter.format_paginated(
-            tags=(output_dict["tag_dicts"], tag_maps),
-            tokens=tokens,
-            text_name=os.path.splitext(output_dict["text_name"]),
-            processing_id=corpus_info["processing_id"]
-        )
-        format_outputs.update(
-            # _save_separate_paginated_format_output(
-            _save_single_paginated_format_output(
-                output_dict,
-                corpus_info,
-                format_name,
-                format_output,
-                chunk
-            )
-        )
-    return format_outputs
 
-def _save_single_paginated_format_output(
-        output_dict,
-        corpus_info,
-        format_name,
-        format_output,
-        chunk=''
-):
-    format_outputs = {}
-    format_outputs[format_name] = {
-        "app": None,
-        "pages": [],
-        "tags_json": None,
-        "pages_json": None
-    }
-    text_name = output_dict["text_key"]
-    page_folder_name = "".join([
-        text_name,
-        "_",
-        "Docuscope"
-    ])
-    tmpRelPath = output_dict["text_path"].replace(
-        corpus_info["data"]["Text"]["path"],
-        ""
-    )
-    while tmpRelPath.startswith('/') or tmpRelPath.startswith("\\"):
-        tmpRelPath = tmpRelPath[1:]
-    text_relative_path = os.path.dirname(tmpRelPath)
-    if chunk == '':
-        format_output_root = os.path.join(
-            corpus_info["output_path"],
-            corpus_info["provenance"],
-            # "Formats",
-            format_name.lower(),
-            text_relative_path
-        )
-    # if the output is chunked, organized each html file into its respective folder
-    else:
-        format_output_root = os.path.join(
-            corpus_info["output_path"],
-            corpus_info["provenance"],
-            # "Formats",
-            format_name.lower(),
-            text_relative_path, page_folder_name
-        )
-    if not os.path.exists(format_output_root):
-        os.makedirs(format_output_root)
-    # Write the app file to disk.
-    app_output_path = os.path.join(
-        format_output_root,
-        page_folder_name + chunk + ".html"
-    )
-    app_output_file = codecs.open(app_output_path, "w", encoding="UTF-8")
-    app_output_file.write(format_output)
-    app_output_file.close()
-    format_outputs[format_name]["app"] = app_output_path
-    return format_outputs
-
-#writes formatted output to paginated html files
-def _save_separate_paginated_format_output(
-        output_dict,
-        corpus_info,
-        formats,
-        format_name,
-        format_args,
-        format_output
-):
-    format_outputs = {}
-    format_outputs[format_name] = {
-        "app": None,
-        "pages": [],
-        "tags_json": None,
-        "pages_json": None
-    }
-    text_name = os.path.splitext(output_dict["text_name"])[0]
-    simplified_text_name = nameToKey(text_name)
-    page_folder_name = "".join([
-        # simplified_text_name,
-        text_name,
-        "_",
-        "-".join(output_dict["tag_dicts"].keys())
-    ])
-    format_output_root = os.path.join(
-        corpus_info["output_path"],
-        corpus_info["provenance"],
-        # "Formats",
-        format_name,
-        page_folder_name
-    )
-    if not os.path.exists(format_output_root):
-        os.makedirs(format_output_root)
-    # Write the app file to disk.
-    app_output_path = os.path.join(
-        format_output_root,
-        "index.html"
-    )
-    app_output_file = codecs.open(app_output_path, "w", encoding="UTF-8")
-    app_output_file.write(format_output["app"])
-    app_output_file.close()
-    format_outputs[format_name]["app"] = app_output_path
-    # Write the tags file to disk.
-    tags_output_path = os.path.join(
-        format_output_root,
-        "tags.json"
-    )
-    tags_output_file = codecs.open(tags_output_path, "w", encoding="UTF-8")
-    tags_output_file.write(json.dumps(format_output["tags"]))
-    tags_output_file.close()
-    format_outputs[format_name]["tags_json"] = tags_output_path
-    # Write the pages to disk.
-    page_output_root = os.path.join(
-        format_output_root,
-        "pages"
-    )
-    if not os.path.exists(page_output_root):
-        os.makedirs(page_output_root)
-    for page_index, page_output in enumerate(format_output["pages"]):
-        page_filename = "".join([
-            str(page_index),
-            "_",
-            # simplified_text_name,
-            text_name,
-            "_",
-            "-".join(output_dict["tag_dicts"].keys()),
-            ".html"
-        ])
-        page_output_path = os.path.join(
-            page_output_root,
-            page_filename
-        )
-        page_output_file = codecs.open(page_output_path, "w", encoding="UTF-8")
-        page_output_file.write(page_output)
-        page_output_file.close()
-        format_outputs[format_name]["pages"].append(page_output_path)
-    # Write pages.json to disk.
-    pages_json_output_path = os.path.join(
-        format_output_root,
-        "pages.json"
-    )
-    pages_json_output_file = codecs.open(pages_json_output_path, "w", encoding="UTF-8")
-    pages_json_output_file.write(json.dumps([
-                                                os.path.join("pages", os.path.basename(page_path))
-                                                for page_path in format_outputs[format_name]["pages"]
-                                                ]))
-    pages_json_output_file.close()
-    format_outputs[format_name]["pages_json"] = pages_json_output_path
-    return format_outputs
 
 header_titles = {
     "<# Word Tokens>": "num_word_tokens",
@@ -834,26 +634,26 @@ def getCSVPath(corpus_info, name, type, docName=None):
     if type == 'gen':
         format_output_path = os.path.join(
             format_output_root,
-            name+corpus_info['provenance'] + '.csv'
+            name+corpus_info["job_name"] + '-ubiq.csv'
         )
     elif type == 'rule':
         format_output_path = os.path.join(
-            format_output_root,name+
-                               'rule-count-'+corpus_info["provenance"]+'.csv')
+            format_output_root,name+corpus_info["job_name"]+ '-rule-count.csv'
+        )
     elif type == 'ngram':
         if not os.path.exists(ngram_output_root):
             os.makedirs(ngram_output_root)
-        format_output_path = os.path.join(ngram_output_root, name+corpus_info["provenance"] + "-")
+        format_output_path = os.path.join(ngram_output_root, name+corpus_info["job_name"] + "-")
     elif type == 'doc_ngram':
         if not os.path.exists(ngram_output_root):
             os.makedirs(ngram_output_root)
         if not os.path.exists(ngram_doc_root):
             os.makedirs(ngram_doc_root)
-        format_output_path = os.path.join(ngram_doc_root, name+corpus_info["provenance"] + "-" + docName + "-")
+        format_output_path = os.path.join(ngram_doc_root, name+corpus_info["job_name"] + "-" + docName + "-")
     elif type == 'token_csv':
         if not os.path.exists(token_csv_root):
             os.makedirs(token_csv_root)
-        format_output_path = os.path.join(token_csv_root, name + corpus_info["provenance"] + "-" + docName + '-tokens' + '.csv')
+        format_output_path = os.path.join(token_csv_root, docName + '-ubiq-tokens' + '.csv')
     return format_output_path
 
 
@@ -868,7 +668,7 @@ def getHeaderKeys(tag_list, is_docuscope, defect_count):
     header_keys = [
                       "text_name",
                       "text_key",
-                      "html_name",
+                      "token_csv_name",
                       "chunk_index"] + tag_keys + [
                       "<# Word Tokens>",
                       "<# Punctuation Tokens>",

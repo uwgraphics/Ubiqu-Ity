@@ -107,7 +107,7 @@ class RegexTokenizer(Tokenizer):
         # "Interior punctuation": zero or one non-whitespace characters.
         \S?
         # One or more word characters.
-        \w+
+        [\^\w]+
     """
 
     # "Word with Hyphen Breaks" Pattern
@@ -189,7 +189,7 @@ class RegexTokenizer(Tokenizer):
          case_sensitive=True,
          preserve_original_strs=False,
          remove_hyphen_breaks=True,
-         convert_entities=True,
+         convert_entities=False,
          convert_newlines=True,
          condense_whitespace=None,
          condense_newlines=None
@@ -277,8 +277,6 @@ class RegexTokenizer(Tokenizer):
         self.__compile_tokenize_pattern()
         # If we're going to convert entities, we need an HTMLParser instance.
         self.html_parser = None
-        if self.convert_entities:
-            self.html_parser = HTMLParser.HTMLParser()
 
     def __compile_tokenize_pattern(self):
         """

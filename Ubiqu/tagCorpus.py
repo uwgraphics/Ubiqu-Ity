@@ -17,7 +17,6 @@ parser.add_argument('--rule_per_doc', help='flag for generating a rule csv per d
 parser.add_argument('--ngram_count', help='flag for generating ngram csv, 0 if none, between 1 and 3 for n-grams')
 parser.add_argument('--ngram_pun', help='flag for including punctuation characters in ngrams', action='store_true')
 parser.add_argument('--ngram_per_doc', help='flag for per-document ngrams', action='store_true')
-parser.add_argument('--noHTML', help='include if we do not need the tagged HTML files', action='store_true')
 parser.add_argument('--simple_dictionary_path', help='CSV file containing custom dictionary')
 parser.add_argument('--docuscope_version', help='version of DocuScope tagging to use')
 parser.add_argument('--chunk', help='divide each text in the corpus into chunks of equal length', action='store_true')
@@ -45,7 +44,7 @@ def tagCorpusWithArgs(args):
             raise ValueError("Simple Rule dictionary (%s) must be a CSV" % args.simple_dictionary_path)
     else:
         if 'Docuscope' not in os.listdir(dictionaries_root):
-            raise ValueError("No Docuscope dictionaries available. Please specify a Simple Rule dictionary for tagging or use the web client for Docuscope tagging.")
+            raise ValueError("No Docuscope dictionaries available. Please specify a Simple Rule dictionary for tagging, download a copy of Docusope 3.21 and pass it in as an argument, or use the web client for Docuscope tagging.")
 
     # Setup corpus_info and corpus_data_files
     timestamp = datetime.now().strftime("%Y-%m-%d-%X").replace(":", "-")
@@ -57,6 +56,7 @@ def tagCorpusWithArgs(args):
     print 'Tagging corpus %s...' % args.corpus_name
     corpus_info = {
         "name": args.corpus_name,
+        "job_name":args.corpus_name,
         "provenance": "ubq-%s-%s" % (args.corpus_name, timestamp),
         "path": args.corpus_path,
         "output_path": args.output_path,
@@ -96,7 +96,6 @@ def tagCorpusWithArgs(args):
             corpus_data_files=corpus_data_files,
             ngram_count=args.ngram_count,
             ngram_pun=args.ngram_pun,
-            generate_text_htmls=(not args.noHTML),
             chunk_text = args.chunk,
             chunk_length = args.chunk_length,
             chunk_offset = args.chunk_offset,
@@ -113,7 +112,6 @@ def tagCorpusWithArgs(args):
             corpus_data_files=corpus_data_files,
             ngram_count=args.ngram_count,
             ngram_pun=args.ngram_pun,
-            generate_text_htmls=(not args.noHTML),
             tags=ImmutableDict(Docuscope={"dictionary_path": args.docuscope_version}),
             chunk_text = args.chunk,
             chunk_length = args.chunk_length,

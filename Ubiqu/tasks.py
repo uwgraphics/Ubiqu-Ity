@@ -50,7 +50,7 @@ from celery.signals import task_sent
 from email.mime.text import MIMEText
 import smtplib
 
-version = 1.1
+version = 1.2
 
 # generic email form sent after jobs complete
 def email_alert(email, failed=False, name=''):
@@ -80,10 +80,11 @@ def email_alert(email, failed=False, name=''):
     # Send mail
     try:
         if name != '':
-            status_link = '%s/tag_corpus/%s/%s' % (ubiquity_url, corpus_name, name[:-1])
+            status_link = '%s/tag_corpus/%s/%s' % (ubiquity_url, corpus_name, name)
+            msg = MIMEText(body % (name, status_link))
         else:
             status_link = '%s/tag_corpus/%s/%s' % (ubiquity_url, corpus_name, '~')  #placeholder to retain url structure
-        msg = MIMEText(body % (corpus_name, status_link))
+            msg = MIMEText(body % (corpus_name, status_link))
         msg['Subject'] = 'Ubiqu+Ity job %s' % subject_status
         msg['To'] = email
         msg['From'] = mail_from_address
@@ -256,13 +257,10 @@ def tag_corpus(
         corpus_data_files,
         email,
         tags=ImmutableDict(Docuscope={"return_included_tags": True, "return_excluded_tags": False}),
-        formats=ImmutableDict(HTML=None),
-        batch_formats=ImmutableDict(CSV=None),
         create_zip_archive=False,
         ngram_count=0,
         ngram_pun=False,
         ngram_per_doc=False,
-        generate_text_htmls=True,
         chunk_text=False,
         chunk_length=None,
         chunk_offset=None,
@@ -278,13 +276,10 @@ def tag_corpus(
         corpus_data_files,
         email,
         tags=tags,
-        formats=formats,
-        batch_formats=batch_formats,
         create_zip_archive=create_zip_archive,
         ngram_count=ngram_count,
         ngram_pun=ngram_pun,
         ngram_per_doc=ngram_per_doc,
-        generate_text_htmls=generate_text_htmls,
         chunk_text=chunk_text,
         chunk_length=chunk_length,
         chunk_offset=chunk_offset,
