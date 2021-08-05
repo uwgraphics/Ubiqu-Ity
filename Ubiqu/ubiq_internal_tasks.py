@@ -1,3 +1,9 @@
+# gleicher August 2021
+# try not to change things, but new additions should be Python 3 style
+# I want to add verbosity (since this will always be run in bulk commandline)
+# so I want print
+from __future__ import print_function
+
 from __future__ import absolute_import
 import os
 import codecs
@@ -54,9 +60,11 @@ def tag_corpus(
         app_mode=False,
         current_task=None,
         logger=None,
-        token_csv=False
+        token_csv=False,
+        verbose=True,
+        includeTagViewer = False
 ):
-    print 'Starting tag_corpus...'
+    print('Starting tag_corpus...')
     tag_corpus_start = time()
     timing = []
 
@@ -232,7 +240,11 @@ def tag_corpus(
     # initialize unreadable files list
     bad_texts = []
 
-    for text_path in text_paths:
+    # gleicher, summer 2021 - make this an enumerate to keep track of how much we've done
+    # just for printing
+    for ct,text_path in enumerate(text_paths):
+        if verbose:
+            print("file {} of {}".format(ct,len(text_paths)))
         # tokenize
         start = time()
         try:
@@ -339,8 +351,9 @@ def tag_corpus(
             corpus_info["provenance"],'TextViewer.html'
         )
         print(TVpath)
-        shutil.copyfile('TextViewer.html', TVpath)
-    print 'tag_corpus finished. Total elapsed time: %.2f seconds.' % (time() - tag_corpus_start)
+        if includeTagViewer:
+            shutil.copyfile('TextViewer.html', TVpath)
+    print('tag_corpus finished. Total elapsed time: %.2f seconds.' % (time() - tag_corpus_start))
 
     return csv_path
 
