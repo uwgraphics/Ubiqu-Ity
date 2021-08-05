@@ -1,3 +1,5 @@
 .hg*
 Data/Dictionaries/Docuscope/*
 *~
+*.pyc
+.idea/
