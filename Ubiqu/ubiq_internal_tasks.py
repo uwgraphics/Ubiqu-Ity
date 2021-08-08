@@ -263,7 +263,10 @@ def tag_corpus(
         if token_csv:
             tagged_frame = TokenTransform.tagFrameMerge(token_frame, result)
             result["token_csv_name"] = result['text_key'] + '-ubiq-tokens' + '.csv'
-            tokenCSVPath = getCSVPath(corpus_info, name, type='token_csv', docName=result['text_key'])
+            # gleicher - change file names to match the input file names
+            # filename = result['text_key']
+            filename = os.path.splitext(result['text_name'])[0]
+            tokenCSVPath = getCSVPath(corpus_info, name, type='token_csv', docName=filename)
             tagged_frame.to_csv(tokenCSVPath, index=False, header=False, encoding='utf-8')
         else:
             if chunk_text:
